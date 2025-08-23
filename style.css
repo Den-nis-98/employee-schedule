@@ -245,21 +245,25 @@ body {
     position: relative;
     min-height: 80px;
     padding: 5px;
+    cursor: pointer;
+    border: 1px solid #e0e0e0;
 }
 
 .day-number {
     font-weight: bold;
-    margin-bottom: 5px;
+    font-size: 16px;
+    margin-bottom: 3px;
+    text-align: center;
 }
 
-.shift-hours {
+.shift-time {
+    font-size: 12px;
+    text-align: center;
     background-color: #4CAF50;
     color: white;
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-size: 12px;
-    font-weight: bold;
-    text-align: center;
+    padding: 3px;
+    border-radius: 4px;
+    margin-top: 3px;
 }
 
 .has-shift {
@@ -268,11 +272,21 @@ body {
 
 .today {
     background-color: #fff3cd;
+    border: 2px solid #ffc107;
 }
 
 .today.has-shift {
     background-color: #e8f5e8;
     border: 2px solid #ffc107;
+}
+
+.other-month {
+    background-color: #f8f9fa;
+    color: #adb5bd;
+}
+
+.other-month .day-number {
+    color: #adb5bd;
 }
 /* Модальное окно */
 .modal {
