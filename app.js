@@ -26,7 +26,7 @@ function showMessage(text, type) {
     if (!messageDiv) return;
     
     messageDiv.textContent = text;
-    messageDiv.className = type;
+    messageDiv.className = `message ${type}`;
     messageDiv.classList.remove('hidden');
     
     setTimeout(() => {
@@ -85,8 +85,7 @@ async function register() {
     try {
         showMessage('Регистрация...', 'success');
 
-        // Регистрируем пользователя
-        const { data: authData, error: authError } = await supabase.auth.signUp({
+        const { error: authError } = await supabase.auth.signUp({
             email: email,
             password: password,
             options: {
@@ -108,7 +107,6 @@ async function register() {
 
         showMessage('Регистрация успешна! Входим...', 'success');
         
-        // Автоматически входим
         setTimeout(() => {
             loginAfterRegister(username, password);
         }, 2000);
@@ -231,7 +229,6 @@ async function loadUserData() {
                 userName.textContent = `${profile.full_name} (@${profile.username})`;
             }
         } else {
-            // Создаем профиль если его нет
             const username = currentUser.email.split('@')[0];
             const { error: insertError } = await supabase
                 .from('profiles')
@@ -300,23 +297,20 @@ function renderCalendar() {
             day.classList.add('today');
         }
 
-        // Проверка на наличие смены и отображение времени
+        // Проверка на наличие смены
         const userShift = currentEvents.find(event => 
             event.date === dateStr && event.user_id === currentUser?.id
         );
         
         if (userShift) {
             day.classList.add('has-shift');
-            
-            // Форматируем время (убираем секунды)
             const startTime = userShift.start_time.substring(0, 5);
             const endTime = userShift.end_time.substring(0, 5);
             
-            // Добавляем элемент с временем смены
-            const timeElement = document.createElement('div');
-            timeElement.className = 'shift-time';
-            timeElement.textContent = `${startTime}-${endTime}`;
-            day.appendChild(timeElement);
+            const shiftElement = document.createElement('div');
+            shiftElement.className = 'day-shift';
+            shiftElement.textContent = `${startTime}-${endTime}`;
+            day.appendChild(shiftElement);
         }
 
         day.addEventListener('click', () => showModal(dateStr));
@@ -408,7 +402,7 @@ function showModal(date) {
 
     if (shiftModal) {
         shiftModal.dataset.date = date;
-        shiftModal.classList.remove('hidden');
+        shiftModal.style.display = 'block';
     }
 }
 
@@ -416,7 +410,7 @@ function showModal(date) {
 function hideModal() {
     const shiftModal = document.getElementById('shift-modal');
     if (shiftModal) {
-        shiftModal.classList.add('hidden');
+        shiftModal.style.display = 'none';
     }
 }
 
@@ -445,7 +439,6 @@ async function saveShiftHandler() {
         );
 
         if (existingShift) {
-            // Обновление существующей смены
             const { error } = await supabase
                 .from('shifts')
                 .update({
@@ -458,7 +451,6 @@ async function saveShiftHandler() {
             if (error) throw error;
             showMessage('Смена обновлена', 'success');
         } else {
-            // Создание новой смены
             const { error } = await supabase
                 .from('shifts')
                 .insert({
@@ -515,7 +507,6 @@ async function deleteShiftHandler() {
 
 // Инициализация обработчиков для авторизации
 function initAuthEventListeners() {
-    // Обработчики для форм авторизации
     const loginBtn = document.getElementById('login-button');
     const registerBtn = document.getElementById('register-button');
     const showRegisterBtn = document.getElementById('show-register');
@@ -529,95 +520,79 @@ function initAuthEventListeners() {
 
 // Инициализация обработчиков для приложения
 function initAppEventListeners() {
-    // Навигация по месяцам
     const prevMonthBtn = document.getElementById('prev-month');
     const nextMonthBtn = document.getElementById('next-month');
-    
-    if (prevMonthBtn) {
-        prevMonthBtn.onclick = () => {
-            currentDate.setMonth(currentDate.getMonth() - 1);
-            const personalView = document.getElementById('personal-view');
-            if (personalView && personalView.classList.contains('active')) {
-                renderCalendar();
-                loadShifts();
-            } else {
-                loadAllShifts();
-            }
-        };
-    }
-    
-    if (nextMonthBtn) {
-        nextMonthBtn.onclick = () => {
-            currentDate.setMonth(currentDate.getMonth() + 1);
-            const personalView = document.getElementById('personal-view');
-            if (personalView && personalView.classList.contains('active')) {
-                renderCalendar();
-                loadShifts();
-            } else {
-                loadAllShifts();
-            }
-        };
-    }
-
-    // Модальное окно
     const closeBtn = document.querySelector('.close');
     const cancelBtn = document.getElementById('cancel-shift');
     const saveBtn = document.getElementById('save-shift');
     const deleteBtn = document.getElementById('delete-shift');
-    
-    if (closeBtn) closeBtn.onclick = hideModal;
-    if (cancelBtn) cancelBtn.onclick = hideModal;
-    if (saveBtn) saveBtn.onclick = saveShiftHandler;
-    if (deleteBtn) deleteBtn.onclick = deleteShiftHandler;
-
-    // Переключение видов
     const personalViewBtn = document.getElementById('personal-view');
     const generalViewBtn = document.getElementById('general-view');
     const logoutBtn = document.getElementById('logout-button');
     
-    if (personalViewBtn) {
-        personalViewBtn.onclick = () => {
-            const generalView = document.getElementById('general-view');
-            const generalSchedule = document.getElementById('general-schedule');
-            const calendarContainer = document.getElementById('calendar-container');
-            
-            if (personalViewBtn && generalView && generalSchedule && calendarContainer) {
-                personalViewBtn.classList.add('active');
-                generalView.classList.remove('active');
-                generalSchedule.classList.add('hidden');
-                calendarContainer.classList.remove('hidden');
-                renderCalendar();
-                loadShifts();
-            }
-        };
-    }
-    
-    if (generalViewBtn) {
-        generalViewBtn.onclick = () => {
-            const personalView = document.getElementById('personal-view');
-            const generalSchedule = document.getElementById('general-schedule');
-            const calendarContainer = document.getElementById('calendar-container');
-            
-            if (generalViewBtn && personalView && generalSchedule && calendarContainer) {
-                generalViewBtn.classList.add('active');
-                personalView.classList.remove('active');
-                generalSchedule.classList.remove('hidden');
-                calendarContainer.classList.add('hidden');
-                loadAllShifts();
-            }
-        };
-    }
-    
+    if (prevMonthBtn) prevMonthBtn.onclick = () => navigateMonth(-1);
+    if (nextMonthBtn) nextMonthBtn.onclick = () => navigateMonth(1);
+    if (closeBtn) closeBtn.onclick = hideModal;
+    if (cancelBtn) cancelBtn.onclick = hideModal;
+    if (saveBtn) saveBtn.onclick = saveShiftHandler;
+    if (deleteBtn) deleteBtn.onclick = deleteShiftHandler;
+    if (personalViewBtn) personalViewBtn.onclick = switchToPersonalView;
+    if (generalViewBtn) generalViewBtn.onclick = switchToGeneralView;
     if (logoutBtn) logoutBtn.onclick = logout;
 }
 
-// Загрузка всех смен (общий график) - альтернативный вариант
+// Навигация по месяцам
+function navigateMonth(direction) {
+    currentDate.setMonth(currentDate.getMonth() + direction);
+    const personalView = document.getElementById('personal-view');
+    if (personalView && personalView.classList.contains('active')) {
+        renderCalendar();
+        loadShifts();
+    } else {
+        loadAllShifts();
+    }
+}
+
+// Переключение на личный вид
+function switchToPersonalView() {
+    const personalView = document.getElementById('personal-view');
+    const generalView = document.getElementById('general-view');
+    const generalSchedule = document.getElementById('general-schedule');
+    const calendarContainer = document.getElementById('calendar-container');
+    
+    if (personalView && generalView && generalSchedule && calendarContainer) {
+        personalView.classList.add('active');
+        generalView.classList.remove('active');
+        generalSchedule.classList.add('hidden');
+        calendarContainer.classList.remove('hidden');
+        renderCalendar();
+        loadShifts();
+    }
+}
+
+// Переключение на общий вид
+function switchToGeneralView() {
+    const personalView = document.getElementById('personal-view');
+    const generalView = document.getElementById('general-view');
+    const generalSchedule = document.getElementById('general-schedule');
+    const calendarContainer = document.getElementById('calendar-container');
+    
+    if (generalView && personalView && generalSchedule && calendarContainer) {
+        generalView.classList.add('active');
+        personalView.classList.remove('active');
+        generalSchedule.classList.remove('hidden');
+        calendarContainer.classList.add('hidden');
+        loadAllShifts();
+    }
+}
+
+// Загрузка всех смен (общий график)
 async function loadAllShifts() {
     const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
     try {
-        // Сначала получаем все смены
+        // Получаем смены
         const { data: shiftsData, error: shiftsError } = await supabase
             .from('shifts')
             .select('*')
@@ -628,7 +603,7 @@ async function loadAllShifts() {
 
         if (shiftsError) throw shiftsError;
 
-        // Затем получаем профили пользователей
+        // Получаем профили
         const userIds = [...new Set(shiftsData.map(shift => shift.user_id))];
         const { data: profilesData, error: profilesError } = await supabase
             .from('profiles')
@@ -656,6 +631,7 @@ async function loadAllShifts() {
         }
     }
 }
+
 // Отображение всех смен в общем графике
 function displayAllShifts(shifts) {
     const allShiftsContainer = document.getElementById('all-shifts');
@@ -668,7 +644,6 @@ function displayAllShifts(shifts) {
         return;
     }
 
-    // Группируем смены по датам
     const shiftsByDate = {};
     shifts.forEach(shift => {
         if (!shiftsByDate[shift.date]) {
@@ -677,21 +652,17 @@ function displayAllShifts(shifts) {
         shiftsByDate[shift.date].push(shift);
     });
 
-    // Сортируем даты
     const sortedDates = Object.keys(shiftsByDate).sort();
 
-    // Создаем элементы для каждой даты
     sortedDates.forEach(date => {
         const dateElement = document.createElement('div');
         dateElement.className = 'shift-date-group';
         
-        // Форматируем дату (например, "23.08")
         const dateObj = new Date(date);
         const formattedDate = `${dateObj.getDate().toString().padStart(2, '0')}.${(dateObj.getMonth() + 1).toString().padStart(2, '0')}`;
         
         dateElement.innerHTML = `<h4 class="shift-date-header">${formattedDate}</h4>`;
         
-        // Добавляем смены для этой даты
         shiftsByDate[date].forEach(shift => {
             const shiftElement = document.createElement('div');
             shiftElement.className = 'general-shift-item';
@@ -729,4 +700,5 @@ document.addEventListener('DOMContentLoaded', function() {
     if (registerConfirm) registerConfirm.value = '';
     
     checkAuth();
+});
 });
