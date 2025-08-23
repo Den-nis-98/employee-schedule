@@ -11,18 +11,14 @@ let currentDate = new Date();
 let currentEvents = [];
 
 // --- Вспомогательные функции ---
-
-// Проверка валидности никнейма
 function isValidUsername(username) {
     return /^[a-zA-Z0-9_]{3,20}$/.test(username);
 }
 
-// Проверка валидности ФИО
 function isValidFullname(fullname) {
     return fullname.trim().length >= 3;
 }
 
-// Показ сообщений пользователю
 function showMessage(text, type = 'error') {
     const messageDiv = document.getElementById('auth-message');
     if (!messageDiv) return;
@@ -37,8 +33,6 @@ function showMessage(text, type = 'error') {
 }
 
 // --- Авторизация ---
-
-// Показ формы входа
 function showLogin() {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
@@ -48,7 +42,6 @@ function showLogin() {
     }
 }
 
-// Показ формы регистрации
 function showRegister() {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
@@ -58,7 +51,6 @@ function showRegister() {
     }
 }
 
-// Регистрация нового пользователя
 async function register() {
     const username = document.getElementById('register-username')?.value.trim();
     const fullname = document.getElementById('register-fullname')?.value.trim();
@@ -117,7 +109,6 @@ async function register() {
     }
 }
 
-// Автоматический вход после регистрации
 async function loginAfterRegister(username, password) {
     const email = `${username}@company.com`;
 
@@ -138,7 +129,6 @@ async function loginAfterRegister(username, password) {
     }
 }
 
-// Вход пользователя
 async function login() {
     const username = document.getElementById('login-username')?.value.trim();
     const password = document.getElementById('login-password')?.value;
@@ -169,14 +159,12 @@ async function login() {
     }
 }
 
-// Выход пользователя
 async function logout() {
     await supabase.auth.signOut();
     currentUser = null;
     showAuth();
 }
 
-// Проверка авторизации
 async function checkAuth() {
     const { data: { session }, error } = await supabase.auth.getSession();
 
@@ -197,8 +185,6 @@ async function checkAuth() {
 }
 
 // --- UI функции ---
-
-// Показать экран авторизации
 function showAuth() {
     const authScreen = document.getElementById('auth-screen');
     const app = document.getElementById('app');
@@ -208,7 +194,6 @@ function showAuth() {
     }
 }
 
-// Показать основное приложение
 function showApp() {
     const authScreen = document.getElementById('auth-screen');
     const app = document.getElementById('app');
@@ -218,7 +203,7 @@ function showApp() {
     }
 }
 
-// Загрузка данных пользователя
+// --- Загрузка данных пользователя ---
 async function loadUserData() {
     if (!currentUser) return;
 
@@ -229,28 +214,33 @@ async function loadUserData() {
             .eq('id', currentUser.id)
             .single();
 
-        const userName = document.getElementById('user-name');
-        if (profile && userName) {
-            userName.textContent = `${profile.full_name} (@${profile.username})`;
-        } else if (userName) {
-            const username = currentUser.email.split('@')[0];
-            userName.textContent = `${username} (@${username})`;
+        if (error) {
+            console.error('Ошибка загрузки профиля:', error);
+            return;
+        }
+
+        const userNameElement = document.getElementById('user-name');
+        if (userNameElement) {
+            if (profile) {
+                userNameElement.textContent = `${profile.full_name} (@${profile.username})`;
+            } else {
+                const username = currentUser.email.split('@')[0];
+                userNameElement.textContent = `${username} (@${username})`;
+            }
         }
     } catch (error) {
-        console.error('Ошибка загрузки данных пользователя:', error);
+        console.error('Ошибка:', error);
     }
 }
 
 // --- Календарь ---
-
-// Рендер календаря
 function renderCalendar() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
 
-    const currentMonth = document.getElementById('current-month');
-    if (currentMonth) {
-        currentMonth.textContent = new Date(year, month, 1).toLocaleDateString('ru-RU', {
+    const currentMonthElement = document.getElementById('current-month');
+    if (currentMonthElement) {
+        currentMonthElement.textContent = new Date(year, month, 1).toLocaleDateString('ru-RU', {
             month: 'long',
             year: 'numeric'
         });
@@ -261,39 +251,38 @@ function renderCalendar() {
     const daysInMonth = lastDay.getDate();
     const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
 
-    const calendar = document.getElementById('calendar');
-    if (!calendar) return;
+    const calendarElement = document.getElementById('calendar');
+    if (!calendarElement) return;
 
-    calendar.innerHTML = '';
+    calendarElement.innerHTML = '';
 
     // Дни предыдущего месяца
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = startDay - 1; i >= 0; i--) {
-        const day = createDayElement(prevMonthLastDay - i, 'other-month');
-        calendar.appendChild(day);
+        const dayElement = createDayElement(prevMonthLastDay - i, 'other-month');
+        calendarElement.appendChild(dayElement);
     }
 
     // Дни текущего месяца
     const today = new Date();
     for (let i = 1; i <= daysInMonth; i++) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-        const day = createDayElement(i, '', dateStr, today, year, month, i);
-        calendar.appendChild(day);
+        const dayElement = createDayElement(i, '', dateStr, today, year, month, i);
+        calendarElement.appendChild(dayElement);
     }
 
     // Дни следующего месяца
     const totalCells = 42;
     const remainingCells = totalCells - (startDay + daysInMonth);
     for (let i = 1; i <= remainingCells; i++) {
-        const day = createDayElement(i, 'other-month');
-        calendar.appendChild(day);
+        const dayElement = createDayElement(i, 'other-month');
+        calendarElement.appendChild(dayElement);
     }
 }
 
-// Создание элемента дня
 function createDayElement(dayNumber, additionalClass = '', dateStr = '', today = null, year = null, month = null, i = null) {
-    const day = document.createElement('div');
-    day.className = `day ${additionalClass}`;
+    const dayElement = document.createElement('div');
+    dayElement.className = `day ${additionalClass}`;
 
     const dayNumberElement = document.createElement('div');
     dayNumberElement.className = 'day-number';
@@ -302,14 +291,14 @@ function createDayElement(dayNumber, additionalClass = '', dateStr = '', today =
     const timeContainer = document.createElement('div');
     timeContainer.className = 'shift-time-container';
 
-    day.appendChild(dayNumberElement);
-    day.appendChild(timeContainer);
+    dayElement.appendChild(dayNumberElement);
+    dayElement.appendChild(timeContainer);
 
     if (dateStr) {
-        day.dataset.date = dateStr;
+        dayElement.dataset.date = dateStr;
 
         if (today && year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) {
-            day.classList.add('today');
+            dayElement.classList.add('today');
         }
 
         const userShift = currentEvents.find(event =>
@@ -317,7 +306,7 @@ function createDayElement(dayNumber, additionalClass = '', dateStr = '', today =
         );
 
         if (userShift) {
-            day.classList.add('has-shift');
+            dayElement.classList.add('has-shift');
 
             const startTime = userShift.start_time.substring(0, 5);
             const endTime = userShift.end_time.substring(0, 5);
@@ -334,13 +323,13 @@ function createDayElement(dayNumber, additionalClass = '', dateStr = '', today =
             timeContainer.appendChild(endElement);
         }
 
-        day.addEventListener('click', () => showModal(dateStr));
+        dayElement.addEventListener('click', () => showModal(dateStr));
     }
 
-    return day;
+    return dayElement;
 }
 
-// Загрузка смен пользователя
+// --- Загрузка смен ---
 async function loadShifts() {
     if (!currentUser) return;
 
@@ -368,27 +357,24 @@ async function loadShifts() {
     }
 }
 
-// Обновление статистики
 function updateStats() {
     if (!currentUser) return;
 
     const userShifts = currentEvents.filter(event => event.user_id === currentUser.id);
-    const shiftsCount = document.getElementById('shifts-count');
+    const shiftsCountElement = document.getElementById('shifts-count');
 
-    if (shiftsCount) {
-        shiftsCount.textContent = userShifts.length;
+    if (shiftsCountElement) {
+        shiftsCountElement.textContent = userShifts.length;
     }
 }
 
 // --- Модальное окно ---
-
-// Показать модальное окно
 function showModal(date) {
     if (!currentUser) return;
 
-    const selectedDate = document.getElementById('selected-date');
-    if (selectedDate) {
-        selectedDate.textContent = new Date(date).toLocaleDateString('ru-RU', {
+    const selectedDateElement = document.getElementById('selected-date');
+    if (selectedDateElement) {
+        selectedDateElement.textContent = new Date(date).toLocaleDateString('ru-RU', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -400,48 +386,46 @@ function showModal(date) {
         event.date === date && event.user_id === currentUser.id
     );
 
-    const startTime = document.getElementById('start-time');
-    const endTime = document.getElementById('end-time');
-    const deleteShift = document.getElementById('delete-shift');
-    const shiftModal = document.getElementById('shift-modal');
+    const startTimeElement = document.getElementById('start-time');
+    const endTimeElement = document.getElementById('end-time');
+    const deleteShiftElement = document.getElementById('delete-shift');
+    const shiftModalElement = document.getElementById('shift-modal');
 
     if (existingShift) {
-        if (startTime) startTime.value = existingShift.start_time;
-        if (endTime) endTime.value = existingShift.end_time;
-        if (deleteShift) deleteShift.classList.remove('hidden');
+        if (startTimeElement) startTimeElement.value = existingShift.start_time;
+        if (endTimeElement) endTimeElement.value = existingShift.end_time;
+        if (deleteShiftElement) deleteShiftElement.classList.remove('hidden');
     } else {
-        if (startTime) startTime.value = '09:00';
-        if (endTime) endTime.value = '18:00';
-        if (deleteShift) deleteShift.classList.add('hidden');
+        if (startTimeElement) startTimeElement.value = '09:00';
+        if (endTimeElement) endTimeElement.value = '18:00';
+        if (deleteShiftElement) deleteShiftElement.classList.add('hidden');
     }
 
-    if (shiftModal) {
-        shiftModal.dataset.date = date;
-        shiftModal.classList.remove('hidden');
+    if (shiftModalElement) {
+        shiftModalElement.dataset.date = date;
+        shiftModalElement.classList.remove('hidden');
     }
 }
 
-// Скрыть модальное окно
 function hideModal() {
-    const shiftModal = document.getElementById('shift-modal');
-    if (shiftModal) {
-        shiftModal.classList.add('hidden');
+    const shiftModalElement = document.getElementById('shift-modal');
+    if (shiftModalElement) {
+        shiftModalElement.classList.add('hidden');
     }
 }
 
-// Сохранение смены
 async function saveShiftHandler() {
     if (!currentUser) return;
 
-    const shiftModal = document.getElementById('shift-modal');
-    const startTime = document.getElementById('start-time');
-    const endTime = document.getElementById('end-time');
+    const shiftModalElement = document.getElementById('shift-modal');
+    const startTimeElement = document.getElementById('start-time');
+    const endTimeElement = document.getElementById('end-time');
 
-    if (!shiftModal || !startTime || !endTime) return;
+    if (!shiftModalElement || !startTimeElement || !endTimeElement) return;
 
-    const date = shiftModal.dataset.date;
-    const start = startTime.value;
-    const end = endTime.value;
+    const date = shiftModalElement.dataset.date;
+    const start = startTimeElement.value;
+    const end = endTimeElement.value;
 
     if (!start || !end) {
         showMessage('Заполните все поля', 'error');
@@ -490,14 +474,13 @@ async function saveShiftHandler() {
     }
 }
 
-// Удаление смены
 async function deleteShiftHandler() {
     if (!currentUser) return;
 
-    const shiftModal = document.getElementById('shift-modal');
-    if (!shiftModal) return;
+    const shiftModalElement = document.getElementById('shift-modal');
+    if (!shiftModalElement) return;
 
-    const date = shiftModal.dataset.date;
+    const date = shiftModalElement.dataset.date;
     const existingShift = currentEvents.find(event =>
         event.date === date && event.user_id === currentUser.id
     );
@@ -521,8 +504,6 @@ async function deleteShiftHandler() {
 }
 
 // --- Общий график ---
-
-// Загрузка всех смен
 async function loadAllShifts() {
     const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
@@ -542,17 +523,21 @@ async function loadAllShifts() {
             .order('date', { ascending: true })
             .order('start_time', { ascending: true });
 
-        if (error) throw error;
+        if (error) {
+            console.error('Ошибка загрузки всех смен:', error);
+            return;
+        }
 
         displayAllShifts(data || []);
     } catch (error) {
-        console.error('Ошибка загрузки всех смен:', error);
+        console.error('Ошибка:', error);
     }
 }
 
-// Отображение всех смен
 function displayAllShifts(shifts) {
     const allShiftsContainer = document.getElementById('all-shifts');
+    if (!allShiftsContainer) return;
+
     allShiftsContainer.innerHTML = '';
 
     if (shifts.length === 0) {
@@ -568,9 +553,12 @@ function displayAllShifts(shifts) {
         const end = new Date(`2000-01-01T${shift.end_time}`);
         const duration = (end - start) / (1000 * 60 * 60);
 
+        const fullName = shift.profiles?.full_name || 'Сотрудник';
+        const username = shift.profiles?.username || 'unknown';
+
         shiftElement.innerHTML = `
-            <strong>${shift.profiles?.full_name || 'Сотрудник'}</strong>
-            <small>(@${shift.profiles?.username || 'unknown'})</small>
+            <strong>${fullName}</strong>
+            <small>(@${username})</small>
             <br>
             <small>${shift.date} | ${shift.start_time.substring(0, 5)} - ${shift.end_time.substring(0, 5)}</small>
             <br>
@@ -582,10 +570,7 @@ function displayAllShifts(shifts) {
 }
 
 // --- Инициализация ---
-
-// Инициализация обработчиков событий
 function initEventListeners() {
-    // Навигация по месяцам
     document.getElementById('prev-month')?.addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() - 1);
         renderCalendar();
@@ -598,13 +583,11 @@ function initEventListeners() {
         loadShifts();
     });
 
-    // Модальное окно
     document.querySelector('.close')?.addEventListener('click', hideModal);
     document.getElementById('cancel-shift')?.addEventListener('click', hideModal);
     document.getElementById('save-shift')?.addEventListener('click', saveShiftHandler);
     document.getElementById('delete-shift')?.addEventListener('click', deleteShiftHandler);
 
-    // Переключение видов
     document.getElementById('personal-view')?.addEventListener('click', () => {
         document.getElementById('personal-view')?.classList.add('active');
         document.getElementById('general-view')?.classList.remove('active');
@@ -619,7 +602,6 @@ function initEventListeners() {
         loadAllShifts();
     });
 
-    // Кнопки авторизации
     document.getElementById('login-button')?.addEventListener('click', login);
     document.getElementById('register-button')?.addEventListener('click', register);
     document.getElementById('show-register')?.addEventListener('click', showRegister);
@@ -627,7 +609,7 @@ function initEventListeners() {
     document.getElementById('logout-button')?.addEventListener('click', logout);
 }
 
-// Запуск приложения
+// --- Запуск приложения ---
 document.addEventListener('DOMContentLoaded', async function() {
     initEventListeners();
 
