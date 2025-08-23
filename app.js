@@ -462,14 +462,22 @@ function initEventListeners() {
     // Навигация по месяцам
     document.getElementById('prev-month').addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() - 1);
-        renderCalendar();
-        loadShifts();
+        if (document.getElementById('personal-view').classList.contains('active')) {
+            renderCalendar();
+            loadShifts();
+        } else {
+            loadAllShifts();
+        }
     });
 
     document.getElementById('next-month').addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() + 1);
-        renderCalendar();
-        loadShifts();
+        if (document.getElementById('personal-view').classList.contains('active')) {
+            renderCalendar();
+            loadShifts();
+        } else {
+            loadAllShifts();
+        }
     });
 
     // Модальное окно
@@ -483,9 +491,19 @@ function initEventListeners() {
         document.getElementById('personal-view').classList.add('active');
         document.getElementById('general-view').classList.remove('active');
         document.getElementById('general-schedule').classList.add('hidden');
+        document.getElementById('calendar-container').classList.remove('hidden');
+        renderCalendar();
         loadShifts();
     });
 
+    document.getElementById('general-view').addEventListener('click', () => {
+        document.getElementById('general-view').classList.add('active');
+        document.getElementById('personal-view').classList.remove('active');
+        document.getElementById('calendar-container').classList.add('hidden');
+        document.getElementById('general-schedule').classList.remove('hidden');
+        loadAllShifts();
+    });
+}
     document.getElementById('general-view').addEventListener('click', () => {
         document.getElementById('general-view').classList.add('active');
         document.getElementById('personal-view').classList.remove('active');
@@ -498,6 +516,12 @@ function initEventListeners() {
 async function loadAllShifts() {
     const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+    // Обновляем заголовок с текущим месяцем
+    document.getElementById('current-month').textContent = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toLocaleDateString('ru-RU', {
+        month: 'long',
+        year: 'numeric'
+    });
 
     try {
         const { data, error } = await supabase
@@ -520,10 +544,11 @@ async function loadAllShifts() {
 
     } catch (error) {
         console.error('Error loading all shifts:', error);
+        document.getElementById('all-shifts').innerHTML = '<p>Ошибка загрузки данных</p>';
     }
 }
 
-// Отображение всех смен
+// Отображение всех смен в общем графике
 function displayAllShifts(shifts) {
     const allShiftsContainer = document.getElementById('all-shifts');
     allShiftsContainer.innerHTML = '';
@@ -533,18 +558,46 @@ function displayAllShifts(shifts) {
         return;
     }
 
+    // Группируем смены по датам
+    const shiftsByDate = {};
     shifts.forEach(shift => {
-        const shiftElement = document.createElement('div');
-        shiftElement.className = 'shift-item';
+        if (!shiftsByDate[shift.date]) {
+            shiftsByDate[shift.date] = [];
+        }
+        shiftsByDate[shift.date].push(shift);
+    });
+
+    // Сортируем даты
+    const sortedDates = Object.keys(shiftsByDate).sort();
+
+    // Создаем элементы для каждой даты
+    sortedDates.forEach(date => {
+        const dateElement = document.createElement('div');
+        dateElement.className = 'shift-date-group';
         
-        shiftElement.innerHTML = `
-            <strong>${shift.profiles?.full_name || 'Сотрудник'}</strong>
-            <small>(@${shift.profiles?.username || 'unknown'})</small>
-            <br>
-            <small>${shift.date} | ${shift.start_time.substring(0, 5)} - ${shift.end_time.substring(0, 5)}</small>
-        `;
+        // Форматируем дату (например, "23.08")
+        const dateObj = new Date(date);
+        const formattedDate = `${dateObj.getDate().toString().padStart(2, '0')}.${(dateObj.getMonth() + 1).toString().padStart(2, '0')}`;
         
-        allShiftsContainer.appendChild(shiftElement);
+        dateElement.innerHTML = `<h4 class="shift-date-header">${formattedDate}</h4>`;
+        
+        // Добавляем смены для этой даты
+        shiftsByDate[date].forEach(shift => {
+            const shiftElement = document.createElement('div');
+            shiftElement.className = 'general-shift-item';
+            
+            const startTime = shift.start_time.substring(0, 5);
+            const endTime = shift.end_time.substring(0, 5);
+            
+            shiftElement.innerHTML = `
+                <span class="employee-name">${shift.profiles?.full_name || 'Сотрудник'}</span>
+                <span class="shift-time">${startTime}-${endTime}</span>
+            `;
+            
+            dateElement.appendChild(shiftElement);
+        });
+        
+        allShiftsContainer.appendChild(dateElement);
     });
 }
 // Запускаем при загрузке страницы
