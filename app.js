@@ -459,6 +459,13 @@ async function deleteShiftHandler() {
 
 // Инициализация обработчиков событий
 function initEventListeners() {
+    // Обработчики для форм авторизации
+    document.getElementById('login-button').addEventListener('click', login);
+    document.getElementById('register-button').addEventListener('click', register);
+    document.getElementById('show-register').addEventListener('click', showRegister);
+    document.getElementById('show-login').addEventListener('click', showLogin);
+    document.getElementById('logout-button').addEventListener('click', logout);
+
     // Навигация по месяцам
     document.getElementById('prev-month').addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() - 1);
@@ -500,13 +507,6 @@ function initEventListeners() {
         document.getElementById('general-view').classList.add('active');
         document.getElementById('personal-view').classList.remove('active');
         document.getElementById('calendar-container').classList.add('hidden');
-        document.getElementById('general-schedule').classList.remove('hidden');
-        loadAllShifts();
-    });
-}
-    document.getElementById('general-view').addEventListener('click', () => {
-        document.getElementById('general-view').classList.add('active');
-        document.getElementById('personal-view').classList.remove('active');
         document.getElementById('general-schedule').classList.remove('hidden');
         loadAllShifts();
     });
