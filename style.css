@@ -257,26 +257,26 @@ body {
 }
 
 .shift-time {
-    font-size: 12px;
+    font-size: 11px;
     text-align: center;
-    background-color: #4CAF50;
+    background-color: #2196F3;
     color: white;
-    padding: 3px;
-    border-radius: 4px;
-    margin-top: 3px;
+    padding: 2px 3px;
+    border-radius: 3px;
+    margin-top: 2px;
 }
 
 .has-shift {
-    background-color: #e8f5e8;
+    background-color: #e3f2fd;
 }
 
 .today {
-    background-color: #fff3cd;
+    background-color: #fff8e1;
     border: 2px solid #ffc107;
 }
 
 .today.has-shift {
-    background-color: #e8f5e8;
+    background-color: #e3f2fd;
     border: 2px solid #ffc107;
 }
 
