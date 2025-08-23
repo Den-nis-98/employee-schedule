@@ -611,29 +611,42 @@ function initAppEventListeners() {
     if (logoutBtn) logoutBtn.onclick = logout;
 }
 
-// Загрузка всех смен (общий график)
+// Загрузка всех смен (общий график) - альтернативный вариант
 async function loadAllShifts() {
     const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
     try {
-        const { data, error } = await supabase
+        // Сначала получаем все смены
+        const { data: shiftsData, error: shiftsError } = await supabase
             .from('shifts')
-            .select(`
-                *,
-                profiles:user_id (
-                    full_name,
-                    username
-                )
-            `)
+            .select('*')
             .gte('date', startOfMonth.toISOString().split('T')[0])
             .lte('date', endOfMonth.toISOString().split('T')[0])
             .order('date', { ascending: true })
             .order('start_time', { ascending: true });
 
-        if (error) throw error;
+        if (shiftsError) throw shiftsError;
 
-        displayAllShifts(data || []);
+        // Затем получаем профили пользователей
+        const userIds = [...new Set(shiftsData.map(shift => shift.user_id))];
+        const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, full_name, username')
+            .in('id', userIds);
+
+        if (profilesError) throw profilesError;
+
+        // Объединяем данные
+        const shiftsWithProfiles = shiftsData.map(shift => {
+            const profile = profilesData.find(p => p.id === shift.user_id);
+            return {
+                ...shift,
+                profiles: profile || { full_name: 'Сотрудник', username: 'unknown' }
+            };
+        });
+
+        displayAllShifts(shiftsWithProfiles);
 
     } catch (error) {
         console.error('Error loading all shifts:', error);
@@ -643,7 +656,6 @@ async function loadAllShifts() {
         }
     }
 }
-
 // Отображение всех смен в общем графике
 function displayAllShifts(shifts) {
     const allShiftsContainer = document.getElementById('all-shifts');
