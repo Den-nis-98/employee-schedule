@@ -23,8 +23,6 @@ function isValidFullname(fullname) {
 // Показ сообщений
 function showMessage(text, type) {
     const messageDiv = document.getElementById('auth-message');
-    if (!messageDiv) return;
-    
     messageDiv.textContent = text;
     messageDiv.className = `message ${type}`;
     messageDiv.classList.remove('hidden');
@@ -36,29 +34,21 @@ function showMessage(text, type) {
 
 // Показ форм авторизации
 function showLogin() {
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-    if (loginForm && registerForm) {
-        loginForm.classList.remove('hidden');
-        registerForm.classList.add('hidden');
-    }
+    document.getElementById('login-form').classList.remove('hidden');
+    document.getElementById('register-form').classList.add('hidden');
 }
 
 function showRegister() {
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-    if (loginForm && registerForm) {
-        loginForm.classList.add('hidden');
-        registerForm.classList.remove('hidden');
-    }
+    document.getElementById('login-form').classList.add('hidden');
+    document.getElementById('register-form').classList.remove('hidden');
 }
 
 // Регистрация
 async function register() {
-    const username = document.getElementById('register-username')?.value.trim();
-    const fullname = document.getElementById('register-fullname')?.value.trim();
-    const password = document.getElementById('register-password')?.value;
-    const confirm = document.getElementById('register-confirm')?.value;
+    const username = document.getElementById('register-username').value.trim();
+    const fullname = document.getElementById('register-fullname').value.trim();
+    const password = document.getElementById('register-password').value;
+    const confirm = document.getElementById('register-confirm').value;
 
     if (!username || !fullname || !password) {
         showMessage('Заполните все поля', 'error');
@@ -85,7 +75,8 @@ async function register() {
     try {
         showMessage('Регистрация...', 'success');
 
-        const { error: authError } = await supabase.auth.signUp({
+        // Регистрируем пользователя
+        const { data: authData, error: authError } = await supabase.auth.signUp({
             email: email,
             password: password,
             options: {
@@ -107,6 +98,7 @@ async function register() {
 
         showMessage('Регистрация успешна! Входим...', 'success');
         
+        // Автоматически входим
         setTimeout(() => {
             loginAfterRegister(username, password);
         }, 2000);
@@ -139,8 +131,8 @@ async function loginAfterRegister(username, password) {
 
 // Вход
 async function login() {
-    const username = document.getElementById('login-username')?.value.trim();
-    const password = document.getElementById('login-password')?.value;
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
 
     if (!username || !password) {
         showMessage('Заполните все поля', 'error');
@@ -192,24 +184,14 @@ async function checkAuth() {
 
 // Показать экран авторизации
 function showAuth() {
-    const authScreen = document.getElementById('auth-screen');
-    const app = document.getElementById('app');
-    if (authScreen && app) {
-        authScreen.classList.remove('hidden');
-        app.classList.add('hidden');
-    }
-    initAuthEventListeners();
+    document.getElementById('auth-screen').classList.remove('hidden');
+    document.getElementById('app').classList.add('hidden');
 }
 
 // Показать основное приложение
 function showApp() {
-    const authScreen = document.getElementById('auth-screen');
-    const app = document.getElementById('app');
-    if (authScreen && app) {
-        authScreen.classList.add('hidden');
-        app.classList.remove('hidden');
-    }
-    initAppEventListeners();
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
 }
 
 // Загрузка данных пользователя
@@ -224,11 +206,9 @@ async function loadUserData() {
             .single();
 
         if (profile) {
-            const userName = document.getElementById('user-name');
-            if (userName) {
-                userName.textContent = `${profile.full_name} (@${profile.username})`;
-            }
+            document.getElementById('user-name').textContent = `${profile.full_name} (@${profile.username})`;
         } else {
+            // Создаем профиль если его нет
             const username = currentUser.email.split('@')[0];
             const { error: insertError } = await supabase
                 .from('profiles')
@@ -240,10 +220,7 @@ async function loadUserData() {
                 }]);
 
             if (!insertError) {
-                const userName = document.getElementById('user-name');
-                if (userName) {
-                    userName.textContent = `${username} (@${username})`;
-                }
+                document.getElementById('user-name').textContent = `${username} (@${username})`;
             }
         }
     } catch (error) {
@@ -256,13 +233,10 @@ function renderCalendar() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     
-    const currentMonth = document.getElementById('current-month');
-    if (currentMonth) {
-        currentMonth.textContent = new Date(year, month, 1).toLocaleDateString('ru-RU', {
-            month: 'long',
-            year: 'numeric'
-        });
-    }
+    document.getElementById('current-month').textContent = new Date(year, month, 1).toLocaleDateString('ru-RU', {
+        month: 'long',
+        year: 'numeric'
+    });
 
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
@@ -270,8 +244,6 @@ function renderCalendar() {
     const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
 
     const calendar = document.getElementById('calendar');
-    if (!calendar) return;
-    
     calendar.innerHTML = '';
 
     // Дни предыдущего месяца
@@ -297,20 +269,23 @@ function renderCalendar() {
             day.classList.add('today');
         }
 
-        // Проверка на наличие смены
+        // Проверка на наличие смены и отображение времени
         const userShift = currentEvents.find(event => 
             event.date === dateStr && event.user_id === currentUser?.id
         );
         
         if (userShift) {
             day.classList.add('has-shift');
+            
+            // Форматируем время (убираем секунды)
             const startTime = userShift.start_time.substring(0, 5);
             const endTime = userShift.end_time.substring(0, 5);
             
-            const shiftElement = document.createElement('div');
-            shiftElement.className = 'day-shift';
-            shiftElement.textContent = `${startTime}-${endTime}`;
-            day.appendChild(shiftElement);
+            // Добавляем элемент с временем смены
+            const timeElement = document.createElement('div');
+            timeElement.className = 'shift-time';
+            timeElement.textContent = `${startTime}-${endTime}`;
+            day.appendChild(timeElement);
         }
 
         day.addEventListener('click', () => showModal(dateStr));
@@ -361,72 +336,50 @@ function updateStats() {
     if (!currentUser) return;
 
     const userShifts = currentEvents.filter(event => event.user_id === currentUser.id);
-    const shiftsCount = document.getElementById('shifts-count');
-    if (shiftsCount) {
-        shiftsCount.textContent = userShifts.length;
-    }
+    document.getElementById('shifts-count').textContent = userShifts.length;
 }
 
 // Показать модальное окно
 function showModal(date) {
     if (!currentUser) return;
 
-    const selectedDate = document.getElementById('selected-date');
-    if (selectedDate) {
-        selectedDate.textContent = new Date(date).toLocaleDateString('ru-RU', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    }
+    document.getElementById('selected-date').textContent = new Date(date).toLocaleDateString('ru-RU', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
 
     const existingShift = currentEvents.find(event => 
         event.date === date && event.user_id === currentUser.id
     );
 
-    const startTime = document.getElementById('start-time');
-    const endTime = document.getElementById('end-time');
-    const deleteShift = document.getElementById('delete-shift');
-    const shiftModal = document.getElementById('shift-modal');
-
     if (existingShift) {
-        if (startTime) startTime.value = existingShift.start_time;
-        if (endTime) endTime.value = existingShift.end_time;
-        if (deleteShift) deleteShift.classList.remove('hidden');
+        document.getElementById('start-time').value = existingShift.start_time;
+        document.getElementById('end-time').value = existingShift.end_time;
+        document.getElementById('delete-shift').classList.remove('hidden');
     } else {
-        if (startTime) startTime.value = '09:00';
-        if (endTime) endTime.value = '18:00';
-        if (deleteShift) deleteShift.classList.add('hidden');
+        document.getElementById('start-time').value = '09:00';
+        document.getElementById('end-time').value = '18:00';
+        document.getElementById('delete-shift').classList.add('hidden');
     }
 
-    if (shiftModal) {
-        shiftModal.dataset.date = date;
-        shiftModal.style.display = 'block';
-    }
+    document.getElementById('shift-modal').dataset.date = date;
+    document.getElementById('shift-modal').classList.remove('hidden');
 }
 
 // Скрыть модальное окно
 function hideModal() {
-    const shiftModal = document.getElementById('shift-modal');
-    if (shiftModal) {
-        shiftModal.style.display = 'none';
-    }
+    document.getElementById('shift-modal').classList.add('hidden');
 }
 
 // Сохранение смены
 async function saveShiftHandler() {
     if (!currentUser) return;
 
-    const shiftModal = document.getElementById('shift-modal');
-    const startTime = document.getElementById('start-time');
-    const endTime = document.getElementById('end-time');
-
-    if (!shiftModal || !startTime || !endTime) return;
-
-    const date = shiftModal.dataset.date;
-    const start = startTime.value;
-    const end = endTime.value;
+    const date = document.getElementById('shift-modal').dataset.date;
+    const start = document.getElementById('start-time').value;
+    const end = document.getElementById('end-time').value;
 
     if (!start || !end) {
         showMessage('Заполните все поля', 'error');
@@ -439,6 +392,7 @@ async function saveShiftHandler() {
         );
 
         if (existingShift) {
+            // Обновление существующей смены
             const { error } = await supabase
                 .from('shifts')
                 .update({
@@ -451,6 +405,7 @@ async function saveShiftHandler() {
             if (error) throw error;
             showMessage('Смена обновлена', 'success');
         } else {
+            // Создание новой смены
             const { error } = await supabase
                 .from('shifts')
                 .insert({
@@ -478,10 +433,7 @@ async function saveShiftHandler() {
 async function deleteShiftHandler() {
     if (!currentUser) return;
 
-    const shiftModal = document.getElementById('shift-modal');
-    if (!shiftModal) return;
-
-    const date = shiftModal.dataset.date;
+    const date = document.getElementById('shift-modal').dataset.date;
     const existingShift = currentEvents.find(event => 
         event.date === date && event.user_id === currentUser.id
     );
@@ -505,85 +457,43 @@ async function deleteShiftHandler() {
     }
 }
 
-// Инициализация обработчиков для авторизации
-function initAuthEventListeners() {
-    const loginBtn = document.getElementById('login-button');
-    const registerBtn = document.getElementById('register-button');
-    const showRegisterBtn = document.getElementById('show-register');
-    const showLoginBtn = document.getElementById('show-login');
-    
-    if (loginBtn) loginBtn.onclick = login;
-    if (registerBtn) registerBtn.onclick = register;
-    if (showRegisterBtn) showRegisterBtn.onclick = showRegister;
-    if (showLoginBtn) showLoginBtn.onclick = showLogin;
-}
-
-// Инициализация обработчиков для приложения
-function initAppEventListeners() {
-    const prevMonthBtn = document.getElementById('prev-month');
-    const nextMonthBtn = document.getElementById('next-month');
-    const closeBtn = document.querySelector('.close');
-    const cancelBtn = document.getElementById('cancel-shift');
-    const saveBtn = document.getElementById('save-shift');
-    const deleteBtn = document.getElementById('delete-shift');
-    const personalViewBtn = document.getElementById('personal-view');
-    const generalViewBtn = document.getElementById('general-view');
-    const logoutBtn = document.getElementById('logout-button');
-    
-    if (prevMonthBtn) prevMonthBtn.onclick = () => navigateMonth(-1);
-    if (nextMonthBtn) nextMonthBtn.onclick = () => navigateMonth(1);
-    if (closeBtn) closeBtn.onclick = hideModal;
-    if (cancelBtn) cancelBtn.onclick = hideModal;
-    if (saveBtn) saveBtn.onclick = saveShiftHandler;
-    if (deleteBtn) deleteBtn.onclick = deleteShiftHandler;
-    if (personalViewBtn) personalViewBtn.onclick = switchToPersonalView;
-    if (generalViewBtn) generalViewBtn.onclick = switchToGeneralView;
-    if (logoutBtn) logoutBtn.onclick = logout;
-}
-
-// Навигация по месяцам
-function navigateMonth(direction) {
-    currentDate.setMonth(currentDate.getMonth() + direction);
-    const personalView = document.getElementById('personal-view');
-    if (personalView && personalView.classList.contains('active')) {
+// Инициализация обработчиков событий
+function initEventListeners() {
+    // Навигация по месяцам
+    document.getElementById('prev-month').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
         renderCalendar();
         loadShifts();
-    } else {
-        loadAllShifts();
-    }
-}
+    });
 
-// Переключение на личный вид
-function switchToPersonalView() {
-    const personalView = document.getElementById('personal-view');
-    const generalView = document.getElementById('general-view');
-    const generalSchedule = document.getElementById('general-schedule');
-    const calendarContainer = document.getElementById('calendar-container');
-    
-    if (personalView && generalView && generalSchedule && calendarContainer) {
-        personalView.classList.add('active');
-        generalView.classList.remove('active');
-        generalSchedule.classList.add('hidden');
-        calendarContainer.classList.remove('hidden');
+    document.getElementById('next-month').addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
         renderCalendar();
         loadShifts();
-    }
-}
+    });
 
-// Переключение на общий вид
-function switchToGeneralView() {
-    const personalView = document.getElementById('personal-view');
-    const generalView = document.getElementById('general-view');
-    const generalSchedule = document.getElementById('general-schedule');
-    const calendarContainer = document.getElementById('calendar-container');
-    
-    if (generalView && personalView && generalSchedule && calendarContainer) {
-        generalView.classList.add('active');
-        personalView.classList.remove('active');
-        generalSchedule.classList.remove('hidden');
-        calendarContainer.classList.add('hidden');
+    // Модальное окно
+    document.querySelector('.close').addEventListener('click', hideModal);
+    document.getElementById('cancel-shift').addEventListener('click', hideModal);
+    document.getElementById('save-shift').addEventListener('click', saveShiftHandler);
+    document.getElementById('delete-shift').addEventListener('click', deleteShiftHandler);
+
+    // Переключение видов
+    document.getElementById('personal-view').addEventListener('click', () => {
+        document.getElementById('personal-view').classList.add('active');
+        document.getElementById('general-view').classList.remove('active');
+        document.getElementById('general-schedule').classList.add('hidden');
+        document.getElementById('calendar-container').classList.remove('hidden');
+        loadShifts();
+    });
+
+    document.getElementById('general-view').addEventListener('click', () => {
+        document.getElementById('general-view').classList.add('active');
+        document.getElementById('personal-view').classList.remove('active');
+        document.getElementById('general-schedule').classList.remove('hidden');
+        document.getElementById('calendar-container').classList.add('hidden');
         loadAllShifts();
-    }
+    });
 }
 
 // Загрузка всех смен (общий график)
@@ -603,7 +513,7 @@ async function loadAllShifts() {
 
         if (shiftsError) throw shiftsError;
 
-        // Получаем профили
+        // Получаем профили пользователей
         const userIds = [...new Set(shiftsData.map(shift => shift.user_id))];
         const { data: profilesData, error: profilesError } = await supabase
             .from('profiles')
@@ -625,18 +535,13 @@ async function loadAllShifts() {
 
     } catch (error) {
         console.error('Error loading all shifts:', error);
-        const allShiftsContainer = document.getElementById('all-shifts');
-        if (allShiftsContainer) {
-            allShiftsContainer.innerHTML = '<p>Ошибка загрузки данных</p>';
-        }
+        document.getElementById('all-shifts').innerHTML = '<p>Ошибка загрузки данных</p>';
     }
 }
 
-// Отображение всех смен в общем графике
+// Отображение всех смен
 function displayAllShifts(shifts) {
     const allShiftsContainer = document.getElementById('all-shifts');
-    if (!allShiftsContainer) return;
-    
     allShiftsContainer.innerHTML = '';
 
     if (shifts.length === 0) {
@@ -644,6 +549,7 @@ function displayAllShifts(shifts) {
         return;
     }
 
+    // Группируем смены по датам
     const shiftsByDate = {};
     shifts.forEach(shift => {
         if (!shiftsByDate[shift.date]) {
@@ -652,17 +558,21 @@ function displayAllShifts(shifts) {
         shiftsByDate[shift.date].push(shift);
     });
 
+    // Сортируем даты
     const sortedDates = Object.keys(shiftsByDate).sort();
 
+    // Создаем элементы для каждой даты
     sortedDates.forEach(date => {
         const dateElement = document.createElement('div');
         dateElement.className = 'shift-date-group';
         
+        // Форматируем дату (например, "23.08")
         const dateObj = new Date(date);
         const formattedDate = `${dateObj.getDate().toString().padStart(2, '0')}.${(dateObj.getMonth() + 1).toString().padStart(2, '0')}`;
         
         dateElement.innerHTML = `<h4 class="shift-date-header">${formattedDate}</h4>`;
         
+        // Добавляем смены для этой даты
         shiftsByDate[date].forEach(shift => {
             const shiftElement = document.createElement('div');
             shiftElement.className = 'general-shift-item';
@@ -684,21 +594,14 @@ function displayAllShifts(shifts) {
 
 // Запускаем при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    // Очистка полей формы
-    const loginUsername = document.getElementById('login-username');
-    const loginPassword = document.getElementById('login-password');
-    const registerUsername = document.getElementById('register-username');
-    const registerFullname = document.getElementById('register-fullname');
-    const registerPassword = document.getElementById('register-password');
-    const registerConfirm = document.getElementById('register-confirm');
-    
-    if (loginUsername) loginUsername.value = '';
-    if (loginPassword) loginPassword.value = '';
-    if (registerUsername) registerUsername.value = '';
-    if (registerFullname) registerFullname.value = '';
-    if (registerPassword) registerPassword.value = '';
-    if (registerConfirm) registerConfirm.value = '';
-    
+    initEventListeners();
     checkAuth();
-});
+    
+    // Очистка полей формы
+    document.getElementById('login-username').value = '';
+    document.getElementById('login-password').value = '';
+    document.getElementById('register-username').value = '';
+    document.getElementById('register-fullname').value = '';
+    document.getElementById('register-password').value = '';
+    document.getElementById('register-confirm').value = '';
 });
