@@ -1,2 +1,0 @@
-# employee-schedule
-Рабочий календарь
