@@ -208,6 +208,7 @@ async function loadUserData() {
     if (!currentUser) return;
 
     try {
+        console.log("Загружаем данные для пользователя с ID:", currentUser.id);
         const { data: profile, error } = await supabase
             .from('profiles')
             .select('full_name, username')
@@ -218,6 +219,8 @@ async function loadUserData() {
             console.error('Ошибка загрузки профиля:', error);
             return;
         }
+
+        console.log("Получен профиль:", profile);
 
         const userNameElement = document.getElementById('user-name');
         if (userNameElement) {
@@ -509,6 +512,7 @@ async function loadAllShifts() {
     const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
     try {
+        console.log("Загружаем все смены за период:", startOfMonth, endOfMonth);
         const { data, error } = await supabase
             .from('shifts')
             .select(`
@@ -528,6 +532,7 @@ async function loadAllShifts() {
             return;
         }
 
+        console.log("Получены смены:", data);
         displayAllShifts(data || []);
     } catch (error) {
         console.error('Ошибка:', error);
@@ -535,8 +540,12 @@ async function loadAllShifts() {
 }
 
 function displayAllShifts(shifts) {
+    console.log("Отображаем смены:", shifts);
     const allShiftsContainer = document.getElementById('all-shifts');
-    if (!allShiftsContainer) return;
+    if (!allShiftsContainer) {
+        console.error("Элемент all-shifts не найден!");
+        return;
+    }
 
     allShiftsContainer.innerHTML = '';
 
