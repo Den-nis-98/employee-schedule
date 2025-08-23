@@ -1,0 +1,100 @@
+// Настройки Supabase (заполнишь позже)
+const SUPABASE_URL = 'https://твой-проект.supabase.co';
+const SUPABASE_KEY = 'твой-ключ';
+
+// Создаем подключение
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Проверяем, авторизован ли пользователь
+async function checkAuth() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('app-screen').classList.remove('hidden');
+        loadShifts();
+    }
+}
+
+// Вход через GitHub
+async function login() {
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+            redirectTo: window.location.origin
+        }
+    });
+}
+
+// Выход
+async function logout() {
+    await supabase.auth.signOut();
+    document.getElementById('auth-screen').classList.remove('hidden');
+    document.getElementById('app-screen').classList.add('hidden');
+}
+
+// Добавление смены
+async function addShift() {
+    const date = document.getElementById('shift-date').value;
+    const startTime = document.getElementById('start-time').value;
+    const endTime = document.getElementById('end-time').value;
+    
+    if (!date || !startTime || !endTime) {
+        alert('Заполните все поля!');
+        return;
+    }
+
+    const { error } = await supabase
+        .from('shifts')
+        .insert([{ date, start_time: startTime, end_time: endTime }]);
+
+    if (error) {
+        alert('Ошибка: ' + error.message);
+    } else {
+        loadShifts();
+        // Очищаем поля
+        document.getElementById('shift-date').value = '';
+        document.getElementById('start-time').value = '';
+        document.getElementById('end-time').value = '';
+    }
+}
+
+// Загрузка смен
+async function loadShifts() {
+    // Мои смены
+    const { data: myShifts } = await supabase
+        .from('shifts')
+        .select('*')
+        .order('date');
+
+    // Все смены всех сотрудников
+    const { data: allShifts } = await supabase
+        .from('shifts')
+        .select(`
+            *,
+            profiles (username)
+        `)
+        .order('date');
+
+    // Показываем мои смены
+    document.getElementById('my-shifts').innerHTML = `
+        <h3>Мои смены:</h3>
+        ${myShifts.map(shift => `
+            <div class="shift">
+                ${shift.date}: ${shift.start_time} - ${shift.end_time}
+            </div>
+        `).join('')}
+    `;
+
+    // Показываем общий график
+    document.getElementById('all-shifts').innerHTML = `
+        ${allShifts.map(shift => `
+            <div class="shift">
+                <strong>${shift.profiles.username}:</strong>
+                ${shift.date}: ${shift.start_time} - ${shift.end_time}
+            </div>
+        `).join('')}
+    `;
+}
+
+// Запускаем проверку авторизации при загрузке страницы
+checkAuth();
