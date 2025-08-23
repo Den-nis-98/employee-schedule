@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>График сотрудников</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .hidden { display: none; }
+        .shift { background: #f0f0f0; padding: 10px; margin: 5px; border-radius: 5px; }
+        button { padding: 10px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <!-- Экран авторизации -->
+    <div id="auth-screen">
+        <h1>График сотрудников</h1>
+        <button onclick="login()">Войти через GitHub</button>
+    </div>
+
+    <!-- Основное приложение -->
+    <div id="app-screen" class="hidden">
+        <h1>Мой график</h1>
+        <button onclick="logout()">Выйти</button>
+        
+        <div>
+            <h3>Добавить смену:</h3>
+            <input type="date" id="shift-date">
+            <input type="time" id="start-time">
+            <input type="time" id="end-time">
+            <button onclick="addShift()">Добавить</button>
+        </div>
+
+        <div id="my-shifts">
+            <h3>Мои смены:</h3>
+        </div>
+
+        <div>
+            <h3>Общий график:</h3>
+            <div id="all-shifts"></div>
+        </div>
+    </div>
+
+    <!-- Подключаем Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+</html>
