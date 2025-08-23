@@ -228,7 +228,7 @@ async function loadUserData() {
     }
 }
 
-// Рендер календаря
+// Рендер календаря с днями недели
 function renderCalendar() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -241,18 +241,25 @@ function renderCalendar() {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Понедельник = 0
 
     const calendar = document.getElementById('calendar');
     calendar.innerHTML = '';
 
-    // Дни предыдущего месяца
-    const prevMonthLastDay = new Date(year, month, 0).getDate();
-    for (let i = startDay - 1; i >= 0; i--) {
-        const day = document.createElement('div');
-        day.className = 'day other-month';
-        day.innerHTML = `<div class="day-number">${prevMonthLastDay - i}</div>`;
-        calendar.appendChild(day);
+    // Добавляем заголовки дней недели
+    const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+    daysOfWeek.forEach(day => {
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'day-header';
+        dayHeader.textContent = day;
+        calendar.appendChild(dayHeader);
+    });
+
+    // Пустые ячейки перед первым днем месяца
+    for (let i = 0; i < startDay; i++) {
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'day other-month';
+        calendar.appendChild(emptyDay);
     }
 
     // Дни текущего месяца
@@ -292,14 +299,15 @@ function renderCalendar() {
         calendar.appendChild(day);
     }
 
-    // Дни следующего месяца
-    const totalCells = 42;
-    const remainingCells = totalCells - (startDay + daysInMonth);
-    for (let i = 1; i <= remainingCells; i++) {
-        const day = document.createElement('div');
-        day.className = 'day other-month';
-        day.innerHTML = `<div class="day-number">${i}</div>`;
-        calendar.appendChild(day);
+    // Оставшиеся пустые ячейки после последнего дня месяца
+    const totalCells = 42; // 6 строк × 7 дней
+    const daysSoFar = startDay + daysInMonth;
+    const remainingCells = totalCells - daysSoFar;
+    
+    for (let i = 0; i < remainingCells; i++) {
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'day other-month';
+        calendar.appendChild(emptyDay);
     }
 }
 
