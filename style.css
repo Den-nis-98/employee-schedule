@@ -226,6 +226,7 @@ body {
 }
 
 /* Календарь - ОСНОВНЫЕ ИЗМЕНЕНИЯ */
+/* Стили для календаря */
 .calendar-container {
     background: white;
     border-radius: 12px;
@@ -258,17 +259,36 @@ body {
 .day {
     aspect-ratio: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     border: 1.5px solid #e9ecef;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s;
     font-weight: 500;
-    font-size: 12px;
     min-height: 32px;
-    padding: 2px;
+    padding: 4px 2px;
     position: relative;
+    text-align: center;
+}
+
+.day-number {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.shift-info {
+    font-size: 10px;
+    color: #666;
+    line-height: 1.2;
+    display: none;
+    width: 100%;
+}
+
+.day.has-shift .shift-info {
+    display: block;
 }
 
 .day:hover {
@@ -286,7 +306,10 @@ body {
     background: #d4edda;
     border-color: #c3e6cb;
     color: #155724;
-    font-weight: 600;
+}
+
+.day.has-shift .day-number {
+    font-weight: 700;
 }
 
 .day.today {
@@ -632,18 +655,42 @@ body {
 }
 
 /* Улучшение для landscape режима на мобильных */
-@media (max-height: 500px) and (orientation: landscape) {
+@media (max-width: 768px) {
     .calendar-container {
-        padding: 8px;
+        padding: 12px;
     }
     
-    .day {
-        min-height: 20px;
-        font-size: 10px;
+    .weekdays {
+        font-size: 11px;
+    }
+    
+    .day-number {
+        font-size: 12px;
+    }
+    
+    .shift-info {
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-container {
+        padding: 10px;
     }
     
     .weekdays {
         font-size: 10px;
-        margin-bottom: 4px;
+    }
+    
+    .day-number {
+        font-size: 11px;
+    }
+    
+    .shift-info {
+        font-size: 8px;
+    }
+    
+    .day {
+        padding: 3px 1px;
     }
 }
