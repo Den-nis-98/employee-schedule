@@ -7,26 +7,30 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Генерация правильного email из ФИО
 function generateEmail(fullname) {
-    // Преобразуем в латиницу и убираем спецсимволы
-    const latinName = fullname
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // удаляем диакритические знаки
-        .replace(/[^a-z0-9\s]/g, '') // удаляем спецсимволы
-        .replace(/\s+/g, '.') // заменяем пробелы на точки
-        .substring(0, 30); // ограничиваем длину
+    // Убираем лишние пробелы и приводим к нижнему регистру
+    const cleanedName = fullname.trim().toLowerCase();
     
-    return `${latinName}@employee.com`;
+    // Заменяем пробелы на точки и убираем спецсимволы
+    let emailLocal = cleanedName
+        .replace(/\s+/g, '.') // пробелы в точки
+        .replace(/[^a-zа-яё\.]/g, '') // убираем все кроме букв и точек
+        .replace(/\.+/g, '.') // убираем повторяющиеся точки
+        .replace(/^\.|\.$/g, ''); // убираем точки в начале и конце
+    
+    // Если после очистки строка пустая, используем случайное число
+    if (!emailLocal) {
+        emailLocal = 'user' + Math.floor(Math.random() * 10000);
+    }
+    
+    // Ограничиваем длину
+    emailLocal = emailLocal.substring(0, 30);
+    
+    return `${emailLocal}@employee.com`;
 }
 
-// Хэш-функция для пароля
-function simpleHash(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = ((hash << 5) - hash) + str.charCodeAt(i);
-        hash = hash & hash;
-    }
-    return Math.abs(hash).toString();
+// Проверка валидности ФИО
+function isValidFullname(fullname) {
+    return fullname.trim().length >= 3 && /[а-яА-Яa-zA-Z]/.test(fullname);
 }
 
 // Показ форм авторизации
@@ -64,6 +68,11 @@ async function register() {
         return;
     }
 
+    if (!isValidFullname(fullname)) {
+        showMessage('ФИО должно содержать хотя бы 3 буквы', 'error');
+        return;
+    }
+
     if (password !== confirm) {
         showMessage('Пароли не совпадают', 'error');
         return;
@@ -76,18 +85,20 @@ async function register() {
 
     // Создаем правильный email
     const email = generateEmail(fullname);
-    const hashedPassword = simpleHash(password);
+    console.log('Generated email:', email); // Для отладки
 
     try {
         // Регистрируем пользователя
         const { data, error } = await supabase.auth.signUp({
             email: email,
-            password: hashedPassword,
+            password: password,
         });
 
         if (error) {
             if (error.message.includes('already registered')) {
-                showMessage('Пользователь с таким ФИО уже существует', 'error');
+                // Пробуем войти если пользователь уже существует
+                showMessage('Пользователь уже существует. Пробуем войти...', 'success');
+                await loginAfterRegister(fullname, password);
             } else {
                 showMessage('Ошибка регистрации: ' + error.message, 'error');
             }
@@ -107,22 +118,36 @@ async function register() {
                 ]);
 
             if (profileError) {
-                // Если ошибка при создании профиля, удаляем пользователя
-                await supabase.auth.admin.deleteUser(data.user.id);
-                showMessage('Ошибка создания профиля: ' + profileError.message, 'error');
+                showMessage('Ошибка создания профиля. Попробуйте войти.', 'error');
+                // Пробуем войти
+                await loginAfterRegister(fullname, password);
                 return;
             }
 
-            showMessage('Регистрация успешна! Теперь войдите в систему', 'success');
-            showLogin();
-            
-            // Очищаем поля регистрации
-            document.getElementById('register-fullname').value = '';
-            document.getElementById('register-password').value = '';
-            document.getElementById('register-confirm').value = '';
+            showMessage('Регистрация успешна! Входим в систему...', 'success');
+            // Автоматически входим после регистрации
+            setTimeout(() => {
+                loginAfterRegister(fullname, password);
+            }, 2000);
         }
     } catch (error) {
         showMessage('Ошибка регистрации: ' + error.message, 'error');
+    }
+}
+
+// Вход после регистрации
+async function loginAfterRegister(fullname, password) {
+    const email = generateEmail(fullname);
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+    });
+
+    if (error) {
+        showMessage('Ошибка входа: ' + error.message, 'error');
+    } else {
+        checkAuth();
     }
 }
 
@@ -136,14 +161,18 @@ async function login() {
         return;
     }
 
+    if (!isValidFullname(fullname)) {
+        showMessage('Введите корректное ФИО', 'error');
+        return;
+    }
+
     // Создаем email на основе ФИО
     const email = generateEmail(fullname);
-    const hashedPassword = simpleHash(password);
 
     try {
         const { data, error } = await supabase.auth.signInWithPassword({
             email: email,
-            password: hashedPassword,
+            password: password,
         });
 
         if (error) {
@@ -202,6 +231,21 @@ async function loadUserData() {
 
         if (profile) {
             document.getElementById('user-name').textContent = profile.full_name;
+        } else {
+            // Если профиля нет, создаем его
+            const { error } = await supabase
+                .from('profiles')
+                .insert([
+                    { 
+                        id: user.id, 
+                        full_name: user.email.split('@')[0],
+                        email: user.email
+                    }
+                ]);
+
+            if (!error) {
+                document.getElementById('user-name').textContent = user.email.split('@')[0];
+            }
         }
     }
 }
@@ -289,7 +333,7 @@ async function loadShifts() {
     if (allShifts && allShifts.length > 0) {
         document.getElementById('all-shifts').innerHTML = allShifts.map(shift => `
             <div class="shift">
-                <strong>${shift.profiles.full_name}</strong><br>
+                <strong>${shift.profiles?.full_name || 'Сотрудник'}</strong><br>
                 ${shift.date}: ${shift.start_time} - ${shift.end_time}
             </div>
         `).join('');
