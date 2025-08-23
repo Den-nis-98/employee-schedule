@@ -1,505 +1,96 @@
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    line-height: 1.6;
-    background: #f5f5f5;
-    color: #333;
-    padding: 20px;
-    max-width: 100%;
-    overflow-x: hidden;
-}
-
-.hidden {
-    display: none !important;
-}
-
-/* Стили авторизации */
-#auth-screen {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.auth-container {
-    background: white;
-    padding: 2rem;
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    width: 100%;
-    max-width: 400px;
-}
-
-.auth-container h1 {
-    text-align: center;
-    margin-bottom: 1.5rem;
-    color: #333;
-    font-size: 1.8rem;
-}
-
-.auth-container input {
-    width: 100%;
-    padding: 12px;
-    margin: 8px 0;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    font-size: 16px;
-    transition: border-color 0.3s;
-}
-
-.auth-container input:focus {
-    border-color: #007bff;
-    outline: none;
-}
-
-.auth-container button {
-    width: 100%;
-    padding: 12px;
-    background: #007bff;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    margin-top: 15px;
-    transition: background 0.3s;
-}
-
-.auth-container button:hover {
-    background: #0056b3;
-}
-
-.auth-container a {
-    color: #007bff;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.auth-container a:hover {
-    text-decoration: underline;
-}
-
-#auth-message {
-    padding: 12px;
-    margin-top: 15px;
-    border-radius: 8px;
-    text-align: center;
-    font-weight: 500;
-}
-
-.error {
-    background: #ffe6e6;
-    color: #d63031;
-    border: 2px solid #ff7675;
-}
-
-.success {
-    background: #e6f7e6;
-    color: #27ae60;
-    border: 2px solid #2ecc71;
-}
-
-/* Основное приложение */
-#app {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.header {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 15px;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    text-align: center;
-}
-
-.user-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #f0f0f0;
-}
-
-.user-info span {
-    font-weight: 600;
-    color: #555;
-}
-
-.header h1 {
-    color: #333;
-    margin-bottom: 1rem;
-    font-size: 1.8rem;
-}
-
-.month-nav {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.month-nav span {
-    font-weight: 600;
-    font-size: 1.2rem;
-    min-width: 120px;
-    text-align: center;
-}
-
-/* Кнопки */
-.btn-primary {
-    background: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s;
-}
-
-.btn-primary:hover {
-    background: #0056b3;
-}
-
-.btn-secondary {
-    background: #6c757d;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s;
-}
-
-.btn-secondary:hover {
-    background: #545b62;
-}
-
-.btn-danger {
-    background: #dc3545;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s;
-}
-
-.btn-danger:hover {
-    background: #c82333;
-}
-
-.btn-icon {
-    background: #f8f9fa;
-    border: 2px solid #dee2e6;
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: all 0.3s;
-}
-
-.btn-icon:hover {
-    background: #e9ecef;
-    border-color: #007bff;
-}
-
-/* Календарь */
-.calendar-container {
-    background: white;
-    border-radius: 15px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.weekdays {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-    margin-bottom: 10px;
-    text-align: center;
-    font-weight: 600;
-    color: #555;
-}
-
-.calendar {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-}
-
-.day {
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #e9ecef;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-weight: 500;
-}
-
-.day:hover {
-    border-color: #007bff;
-    background: #f8f9fa;
-}
-
-.day.other-month {
-    color: #adb5bd;
-    background: #f8f9fa;
-}
-
-.day.has-shift {
-    background: #d4edda;
-    border-color: #c3e6cb;
-    color: #155724;
-}
-
-.day.today {
-    background: #007bff;
-    color: white;
-    border-color: #0056b3;
-}
-
-/* Модальное окно */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background: white;
-    padding: 2rem;
-    border-radius: 15px;
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #f0f0f0;
-}
-
-.modal-header h3 {
-    color: #333;
-    margin: 0;
-}
-
-.close {
-    font-size: 24px;
-    cursor: pointer;
-    color: #999;
-    transition: color 0.3s;
-}
-
-.close:hover {
-    color: #333;
-}
-
-.selected-date {
-    text-align: center;
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-    color: #333;
-}
-
-.time-inputs {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.time-input-group {
-    flex: 1;
-}
-
-.time-input-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
-    color: #555;
-}
-
-.time-input-group input {
-    width: 100%;
-    padding: 10px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    font-size: 16px;
-}
-
-.time-input-group input:focus {
-    border-color: #007bff;
-    outline: none;
-}
-
-.modal-actions {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-}
-
-.modal-actions button {
-    flex: 1;
-}
-
-/* Статистика */
-.stats {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.stat-item {
-    flex: 1;
-    background: white;
-    padding: 1rem;
-    border-radius: 10px;
-    text-align: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.stat-item span {
-    display: block;
-    color: #666;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-}
-
-.stat-item strong {
-    font-size: 1.5rem;
-    color: #007bff;
-}
-
-/* Переключение видов */
-.view-toggle {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 1.5rem;
-}
-
-.view-toggle button {
-    flex: 1;
-}
-
-.view-toggle button.active {
-    background: #0056b3;
-}
-
-/* Общий график */
-#general-schedule {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-#general-schedule h3 {
-    color: #333;
-    margin-bottom: 1rem;
-    text-align: center;
-}
-
-.shifts-list {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.shift-item {
-    background: #f8f9fa;
-    padding: 1rem;
-    margin: 0.5rem 0;
-    border-radius: 8px;
-    border-left: 4px solid #007bff;
-}
-
-.shift-item strong {
-    color: #333;
-}
-
-.shift-item small {
-    color: #666;
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
-    body {
-        padding: 10px;
+// Создаем подключение
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Проверяем, авторизован ли пользователь
+async function checkAuth() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('app-screen').classList.remove('hidden');
+        loadShifts();
     }
+}
+
+// Вход через GitHub
+async function login() {
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+            redirectTo: window.location.origin
+        }
+    });
+}
+
+// Выход
+async function logout() {
+    await supabase.auth.signOut();
+    document.getElementById('auth-screen').classList.remove('hidden');
+    document.getElementById('app-screen').classList.add('hidden');
+}
+
+// Добавление смены
+async function addShift() {
+    const date = document.getElementById('shift-date').value;
+    const startTime = document.getElementById('start-time').value;
+    const endTime = document.getElementById('end-time').value;
     
-    .auth-container {
-        margin: 1rem;
-        padding: 1.5rem;
+    if (!date || !startTime || !endTime) {
+        alert('Заполните все поля!');
+        return;
     }
-    
-    .time-inputs {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    
-    .stats {
-        flex-direction: column;
-    }
-    
-    .modal-actions {
-        flex-direction: column;
-    }
-    
-    .user-info {
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
-    }
-    
-    .view-toggle {
-        flex-direction: column;
+
+    const { error } = await supabase
+        .from('shifts')
+        .insert([{ date, start_time: startTime, end_time: endTime }]);
+
+    if (error) {
+        alert('Ошибка: ' + error.message);
+    } else {
+        loadShifts();
+        // Очищаем поля
+        document.getElementById('shift-date').value = '';
+        document.getElementById('start-time').value = '';
+        document.getElementById('end-time').value = '';
     }
 }
 
-@media (max-width: 480px) {
-    .calendar {
-        gap: 2px;
-    }
-    
-    .day {
-        font-size: 12px;
-        padding: 5px;
-    }
-    
-    .weekdays div {
-        font-size: 12px;
-    }
-    
-    .modal-content {
-        padding: 1rem;
-        margin: 1rem;
-    }
+// Загрузка смен
+async function loadShifts() {
+    // Мои смены
+    const { data: myShifts } = await supabase
+        .from('shifts')
+        .select('*')
+        .order('date');
+
+    // Все смены всех сотрудников
+    const { data: allShifts } = await supabase
+        .from('shifts')
+        .select(`
+            *,
+            profiles (username)
+        `)
+        .order('date');
+
+    // Показываем мои смены
+    document.getElementById('my-shifts').innerHTML = `
+        <h3>Мои смены:</h3>
+        ${myShifts.map(shift => `
+            <div class="shift">
+                ${shift.date}: ${shift.start_time} - ${shift.end_time}
+            </div>
+        `).join('')}
+    `;
+
+    // Показываем общий график
+    document.getElementById('all-shifts').innerHTML = `
+        ${allShifts.map(shift => `
+            <div class="shift">
+                <strong>${shift.profiles.username}:</strong>
+                ${shift.date}: ${shift.start_time} - ${shift.end_time}
+            </div>
+        `).join('')}
+    `;
 }
+
+// Запускаем проверку авторизации при загрузке страницы
+checkAuth();
