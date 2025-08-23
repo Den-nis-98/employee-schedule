@@ -229,7 +229,6 @@ async function loadUserData() {
 }
 
 // Рендер календаря
-// Рендер календаря
 function renderCalendar() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -278,10 +277,14 @@ function renderCalendar() {
         if (userShift) {
             day.classList.add('has-shift');
             
+            // Форматируем время (убираем секунды)
+            const startTime = userShift.start_time.substring(0, 5);
+            const endTime = userShift.end_time.substring(0, 5);
+            
             // Добавляем элемент с временем смены
             const timeElement = document.createElement('div');
             timeElement.className = 'shift-time';
-            timeElement.textContent = `${userShift.start_time}-${userShift.end_time}`;
+            timeElement.textContent = `${startTime}-${endTime}`;
             day.appendChild(timeElement);
         }
 
