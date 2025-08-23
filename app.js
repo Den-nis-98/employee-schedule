@@ -258,25 +258,39 @@ function renderCalendar() {
     // Дни текущего месяца
     const today = new Date();
     for (let i = 1; i <= daysInMonth; i++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         const day = document.createElement('div');
         day.className = 'day';
-        day.textContent = i;
-        day.dataset.date = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        day.innerHTML = `<div class="day-number">${i}</div>`;
+        day.dataset.date = dateStr;
 
         // Проверка на сегодня
         if (year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) {
             day.classList.add('today');
         }
 
-        // Проверка на наличие смены
-        const hasShift = currentEvents.some(event => 
-            event.date === day.dataset.date && event.user_id === currentUser?.id
+        // Проверка на наличие смены и отображение часов
+        const userShift = currentEvents.find(event => 
+            event.date === dateStr && event.user_id === currentUser?.id
         );
-        if (hasShift) {
+        
+        if (userShift) {
             day.classList.add('has-shift');
+            
+            // Рассчитываем продолжительность смены
+            const start = new Date(`2000-01-01T${userShift.start_time}`);
+            const end = new Date(`2000-01-01T${userShift.end_time}`);
+            const duration = (end - start) / (1000 * 60 * 60);
+            
+            // Добавляем элемент с часами
+            const hoursElement = document.createElement('div');
+            hoursElement.className = 'shift-hours';
+            hoursElement.textContent = `${duration.toFixed(1)}ч`;
+            hoursElement.title = `${userShift.start_time} - ${userShift.end_time}`;
+            day.appendChild(hoursElement);
         }
 
-        day.addEventListener('click', () => showModal(day.dataset.date));
+        day.addEventListener('click', () => showModal(dateStr));
         calendar.appendChild(day);
     }
 
@@ -286,7 +300,7 @@ function renderCalendar() {
     for (let i = 1; i <= remainingCells; i++) {
         const day = document.createElement('div');
         day.className = 'day other-month';
-        day.textContent = i;
+        day.innerHTML = `<div class="day-number">${i}</div>`;
         calendar.appendChild(day);
     }
 }
