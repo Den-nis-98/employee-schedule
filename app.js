@@ -270,7 +270,11 @@ function renderCalendar() {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    
+    // Получаем день недели первого дня месяца (0 - воскресенье, 1 - понедельник, и т.д.)
+    const startDayOfWeek = firstDay.getDay();
+    // Преобразуем воскресенье (0) в 6, чтобы неделя начиналась с понедельника
+    const startDay = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
 
     const calendar = document.getElementById('calendar');
     if (!calendar) return;
@@ -324,7 +328,7 @@ function renderCalendar() {
     }
 
     // Дни следующего месяца
-    const totalCells = 42;
+    const totalCells = 42; // 6 строк по 7 дней
     const remainingCells = totalCells - (startDay + daysInMonth);
     for (let i = 1; i <= remainingCells; i++) {
         const day = document.createElement('div');
@@ -333,7 +337,6 @@ function renderCalendar() {
         calendar.appendChild(day);
     }
 }
-
 // Загрузка смен
 async function loadShifts() {
     if (!currentUser) return;
