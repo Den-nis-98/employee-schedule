@@ -537,23 +537,16 @@ function displayAllShifts(shifts) {
         const shiftElement = document.createElement('div');
         shiftElement.className = 'shift-item';
         
-        const start = new Date(`2000-01-01T${shift.start_time}`);
-        const end = new Date(`2000-01-01T${shift.end_time}`);
-        const duration = (end - start) / (1000 * 60 * 60);
-        
         shiftElement.innerHTML = `
             <strong>${shift.profiles?.full_name || 'Сотрудник'}</strong>
             <small>(@${shift.profiles?.username || 'unknown'})</small>
             <br>
-            <small>${shift.date} | ${shift.start_time} - ${shift.end_time}</small>
-            <br>
-            <small>Длительность: ${duration.toFixed(1)} часов</small>
+            <small>${shift.date} | ${shift.start_time.substring(0, 5)} - ${shift.end_time.substring(0, 5)}</small>
         `;
         
         allShiftsContainer.appendChild(shiftElement);
     });
 }
-
 // Запускаем при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     initEventListeners();
