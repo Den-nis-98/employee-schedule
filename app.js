@@ -1,5 +1,5 @@
 // Настройки Supabase (заполнишь позже)
-const SUPABASE_URL = 'https://твой-проект.supabase.co';
+const SUPABASE_URL = 'https://olzdllwagjkhnmtwcbet.supabase.co';
 const SUPABASE_KEY = 'твой-ключ';
 
 // Создаем подключение
