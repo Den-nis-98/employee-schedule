@@ -125,7 +125,7 @@ async function loginAfterRegister(username, password) {
             checkAuth();
         }
     } catch (error) {
-        showMessage('Ошибка: ' + error.message, 'error');
+        showMessage('Ошибка: '极狐 error.message, 'error');
     }
 }
 
@@ -186,12 +186,14 @@ async function checkAuth() {
 function showAuth() {
     document.getElementById('auth-screen').classList.remove('hidden');
     document.getElementById('app').classList.add('hidden');
+    initAuthEventListeners();
 }
 
 // Показать основное приложение
 function showApp() {
     document.getElementById('auth-screen').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
+    initAppEventListeners();
 }
 
 // Загрузка данных пользователя
@@ -330,13 +332,13 @@ async function loadShifts() {
         console.error('Error:', error);
     }
 }
+
 // Обновление статистики
 function updateStats() {
     if (!currentUser) return;
 
     const userShifts = currentEvents.filter(event => event.user_id === currentUser.id);
     document.getElementById('shifts-count').textContent = userShifts.length;
-
 }
 
 // Показать модальное окно
@@ -457,71 +459,102 @@ async function deleteShiftHandler() {
     }
 }
 
-// Инициализация обработчиков событий
-function initEventListeners() {
-    // Обработчики для форм авторизации
-    document.getElementById('login-button').addEventListener('click', login);
-    document.getElementById('register-button').addEventListener('click', register);
-    document.getElementById('show-register').addEventListener('click', showRegister);
-    document.getElementById('show-login').addEventListener('click', showLogin);
-    document.getElementById('logout-button').addEventListener('click', logout);
+// Инициализация обработчиков для авторизации
+function initAuthEventListeners() {
+    // Удаляем старые обработчики и добавляем новые
+    const loginBtn = document.getElementById('login-button');
+    const registerBtn = document.getElementById('register-button');
+    const showRegisterBtn = document.getElementById('show-register');
+    const showLoginBtn = document.getElementById('show-login');
+    
+    if (loginBtn) {
+        loginBtn.onclick = login;
+    }
+    if (registerBtn) {
+        registerBtn.onclick = register;
+    }
+    if (showRegisterBtn) {
+        showRegisterBtn.onclick = showRegister;
+    }
+    if (showLoginBtn) {
+        showLoginBtn.onclick = showLogin;
+    }
+}
 
+// Инициализация обработчиков для приложения
+function initAppEventListeners() {
     // Навигация по месяцам
-    document.getElementById('prev-month').addEventListener('click', () => {
-        currentDate.setMonth(currentDate.getMonth() - 1);
-        if (document.getElementById('personal-view').classList.contains('active')) {
-            renderCalendar();
-            loadShifts();
-        } else {
-            loadAllShifts();
-        }
-    });
-
-    document.getElementById('next-month').addEventListener('click', () => {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        if (document.getElementById('personal-view').classList.contains('active')) {
-            renderCalendar();
-            loadShifts();
-        } else {
-            loadAllShifts();
-        }
-    });
+    const prevMonthBtn = document.getElementById('prev-month');
+    const nextMonthBtn = document.getElementById('next-month');
+    
+    if (prevMonthBtn) {
+        prevMonthBtn.onclick = () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            if (document.getElementById('personal-view').classList.contains('active')) {
+                renderCalendar();
+                loadShifts();
+            } else {
+                loadAllShifts();
+            }
+        };
+    }
+    
+    if (nextMonthBtn) {
+        nextMonthBtn.onclick = () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            if (document.getElementById('personal-view').classList.contains('active')) {
+                renderCalendar();
+                loadShifts();
+            } else {
+                loadAllShifts();
+            }
+        };
+    }
 
     // Модальное окно
-    document.querySelector('.close').addEventListener('click', hideModal);
-    document.getElementById('cancel-shift').addEventListener('click', hideModal);
-    document.getElementById('save-shift').addEventListener('click', saveShiftHandler);
-    document.getElementById('delete-shift').addEventListener('click', deleteShiftHandler);
+    const closeBtn = document.querySelector('.close');
+    const cancelBtn = document.getElementById('cancel-shift');
+    const saveBtn = document.getElementById('save-shift');
+    const deleteBtn = document.getElementById('delete-shift');
+    
+    if (closeBtn) closeBtn.onclick = hideModal;
+    if (cancelBtn) cancelBtn.onclick = hideModal;
+    if (saveBtn) saveBtn.onclick = saveShiftHandler;
+    if (deleteBtn) deleteBtn.onclick = deleteShiftHandler;
 
     // Переключение видов
-    document.getElementById('personal-view').addEventListener('click', () => {
-        document.getElementById('personal-view').classList.add('active');
-        document.getElementById('general-view').classList.remove('active');
-        document.getElementById('general-schedule').classList.add('hidden');
-        document.getElementById('calendar-container').classList.remove('hidden');
-        renderCalendar();
-        loadShifts();
-    });
-
-    document.getElementById('general-view').addEventListener('click', () => {
-        document.getElementById('general-view').classList.add('active');
-        document.getElementById('personal-view').classList.remove('active');
-        document.getElementById('calendar-container').classList.add('hidden');
-        document.getElementById('general-schedule').classList.remove('hidden');
-        loadAllShifts();
-    });
+    const personalViewBtn = document.getElementById('personal-view');
+    const generalViewBtn = document.getElementById('general-view');
+    const logoutBtn = document.getElementById('logout-button');
+    
+    if (personalViewBtn) {
+        personalViewBtn.onclick = () => {
+            document.getElementById('personal-view').classList.add('active');
+            document.getElementById('general-view').classList.remove('active');
+            document.getElementById('general-schedule').classList.add('hidden');
+            document.getElementById('calendar-container').classList.remove('hidden');
+            renderCalendar();
+            loadShifts();
+        };
+    }
+    
+    if (generalViewBtn) {
+        generalViewBtn.onclick = () => {
+            document.getElementById('general-view').classList.add('active');
+            document.getElementById('personal-view').classList.remove('active');
+            document.getElementById('calendar-container').classList.add('hidden');
+            document.getElementById('general-schedule').classList.remove('hidden');
+            loadAllShifts();
+        };
+    }
+    
+    if (logoutBtn) logoutBtn.onclick = logout;
 }
 
 // Загрузка всех смен (общий график)
 async function loadAllShifts() {
     const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-
-    // Обновляем заголовок с текущим месяцем
-    document.getElementById('current-month').textContent = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toLocaleDateString('ru-RU', {
-        month: 'long',
-        year: 'numeric'
-    });
 
     try {
         const { data, error } = await supabase
@@ -544,13 +577,18 @@ async function loadAllShifts() {
 
     } catch (error) {
         console.error('Error loading all shifts:', error);
-        document.getElementById('all-shifts').innerHTML = '<p>Ошибка загрузки данных</p>';
+        const allShiftsContainer = document.getElementById('all-shifts');
+        if (allShiftsContainer) {
+            allShiftsContainer.innerHTML = '<p>Ошибка загрузки данных</p>';
+        }
     }
 }
 
 // Отображение всех смен в общем графике
 function displayAllShifts(shifts) {
     const allShiftsContainer = document.getElementById('all-shifts');
+    if (!allShiftsContainer) return;
+    
     allShiftsContainer.innerHTML = '';
 
     if (shifts.length === 0) {
@@ -600,16 +638,23 @@ function displayAllShifts(shifts) {
         allShiftsContainer.appendChild(dateElement);
     });
 }
+
 // Запускаем при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
-    initEventListeners();
-    checkAuth();
-    
     // Очистка полей формы
-    document.getElementById('login-username').value = '';
-    document.getElementById('login-password').value = '';
-    document.getElementById('register-username').value = '';
-    document.getElementById('register-fullname').value = '';
-    document.getElementById('register-password').value = '';
-    document.getElementById('register-confirm').value = '';
+    const loginUsername = document.getElementById('login-username');
+    const loginPassword = document.getElementById('login-password');
+    const registerUsername = document.getElementById('register-username');
+    const registerFullname = document.getElementById('register-fullname');
+    const registerPassword = document.getElementById('register-password');
+    const registerConfirm = document.getElementById('register-confirm');
+    
+    if (loginUsername) loginUsername.value = '';
+    if (loginPassword) loginPassword.value = '';
+    if (registerUsername) registerUsername.value = '';
+    if (registerFullname) registerFullname.value = '';
+    if (registerPassword) registerPassword.value = '';
+    if (registerConfirm) registerConfirm.value = '';
+    
+    checkAuth();
 });
