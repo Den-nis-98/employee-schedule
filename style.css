@@ -484,22 +484,62 @@ body {
     }
 }
 
+@media (max-width: 768px) {
+    .calendar-container {
+        padding: 0.8rem;
+    }
+    
+    .weekdays {
+        font-size: 13px;
+        gap: 4px;
+    }
+    
+    .calendar {
+        gap: 3px;
+    }
+    
+    .day {
+        font-size: 13px;
+        min-height: 32px;
+        border-width: 1.5px;
+    }
+}
+
 @media (max-width: 480px) {
+    .calendar-container {
+        padding: 0.6rem;
+    }
+    
+    .weekdays {
+        font-size: 11px;
+        gap: 2px;
+        margin-bottom: 5px;
+    }
+    
     .calendar {
         gap: 2px;
     }
     
     .day {
-        font-size: 12px;
-        padding: 5px;
+        font-size: 11px;
+        min-height: 28px;
+        border-width: 1px;
+        border-radius: 6px;
     }
     
-    .weekdays div {
-        font-size: 12px;
+    .month-nav span {
+        font-size: 1.1rem;
+        min-width: 110px;
+    }
+}
+
+@media (max-width: 360px) {
+    .day {
+        font-size: 10px;
+        min-height: 25px;
     }
     
-    .modal-content {
-        padding: 1rem;
-        margin: 1rem;
+    .weekdays {
+        font-size: 10px;
     }
 }
