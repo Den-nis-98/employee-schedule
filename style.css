@@ -412,56 +412,81 @@ body {
     font-weight: bold;
     color: #2196F3;
 }
-/* Переключение видов */
-.view-toggle {
+/* Стили для переключения видов */
+.view-switcher {
     display: flex;
-    gap: 10px;
-    margin-bottom: 1.5rem;
+    justify-content: center;
+    margin-bottom: 20px;
 }
 
-.view-toggle button {
-    flex: 1;
-}
-
-.view-toggle button.active {
-    background: #0056b3;
-}
-
-/* Общий график */
-#general-schedule {
+.view-switcher button {
+    padding: 10px 20px;
+    border: 2px solid #2196F3;
     background: white;
-    padding: 1.5rem;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    color: #2196F3;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
 }
 
-#general-schedule h3 {
-    color: #333;
-    margin-bottom: 1rem;
-    text-align: center;
+.view-switcher button:first-child {
+    border-radius: 5px 0 0 5px;
 }
 
-.shifts-list {
-    max-height: 400px;
-    overflow-y: auto;
+.view-switcher button:last-child {
+    border-radius: 0 5px 5px 0;
 }
 
-.shift-item {
-    background: #f8f9fa;
-    padding: 1rem;
-    margin: 0.5rem 0;
+.view-switcher button.active {
+    background: #2196F3;
+    color: white;
+}
+
+.view-switcher button:hover {
+    background: #1976D2;
+    color: white;
+}
+/* Стили для общего графика */
+.shift-date-group {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: white;
     border-radius: 8px;
-    border-left: 4px solid #007bff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-.shift-item strong {
+.shift-date-header {
+    margin: 0 0 10px 0;
+    color: #2196F3;
+    font-size: 18px;
+    border-bottom: 2px solid #e3f2fd;
+    padding-bottom: 5px;
+}
+
+.general-shift-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.general-shift-item:last-child {
+    border-bottom: none;
+}
+
+.employee-name {
+    font-weight: 500;
     color: #333;
 }
 
-.shift-item small {
-    color: #666;
+.shift-time {
+    background: #2196F3;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
 }
-
 /* Адаптивность */
 @media (max-width: 768px) {
     body {
