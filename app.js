@@ -3,10 +3,7 @@ const SUPABASE_URL = 'https://olzdllwagjkhnmtwcbet.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9semRsbHdhZ2praG5tdHdjYmV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5NDc5MTQsImV4cCI6MjA3MTUyMzkxNH0.yRDXL5r72ieKXoh8FY44Xcqq8kSxdiJilo4HGvzBYhw';
 
 
-// Создаем подключение
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// Проверка валидности никнейма (только латиница и цифры)
+// Проверка валидности никнейма
 function isValidUsername(username) {
     return /^[a-zA-Z0-9_]{3,20}$/.test(username);
 }
@@ -72,7 +69,6 @@ async function register() {
         return;
     }
 
-    // Создаем email на основе никнейма
     const email = `${username}@company.com`;
 
     try {
@@ -89,47 +85,40 @@ async function register() {
         }
 
         // Регистрируем пользователя
-        const { data, error } = await supabase.auth.signUp({
+        const { data: authData, error: authError } = await supabase.auth.signUp({
             email: email,
             password: password,
         });
 
-        if (error) {
-            if (error.message.includes('already registered')) {
-                showMessage('Пользователь с таким никнеймом уже существует', 'error');
-            } else {
-                showMessage('Ошибка регистрации: ' + error.message, 'error');
-            }
+        if (authError) {
+            showMessage('Ошибка регистрации: ' + authError.message, 'error');
             return;
         }
 
         // Создаем профиль пользователя
-        if (data.user) {
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .insert([
-                    { 
-                        id: data.user.id, 
-                        username: username,
-                        full_name: fullname,
-                        email: email
-                    }
-                ]);
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+                id: authData.user.id,
+                username: username,
+                full_name: fullname,
+                email: email
+            });
 
-            if (profileError) {
-                // Если ошибка при создании профиля, удаляем пользователя
-                await supabase.auth.admin.deleteUser(data.user.id);
-                showMessage('Ошибка создания профиля: ' + profileError.message, 'error');
-                return;
-            }
-
-            showMessage('Регистрация успешна! Входим в систему...', 'success');
-            
-            // Автоматически входим после регистрации
-            setTimeout(() => {
-                loginAfterRegister(username, password);
-            }, 2000);
+        if (profileError) {
+            // Удаляем пользователя, если не удалось создать профиль
+            await supabase.auth.admin.deleteUser(authData.user.id);
+            showMessage('Ошибка создания профиля: ' + profileError.message, 'error');
+            return;
         }
+
+        showMessage('Регистрация успешна! Входим в систему...', 'success');
+
+        // Автоматически входим после регистрации
+        setTimeout(() => {
+            loginAfterRegister(username, password);
+        }, 2000);
+
     } catch (error) {
         showMessage('Ошибка регистрации: ' + error.message, 'error');
     }
@@ -138,7 +127,7 @@ async function register() {
 // Вход после регистрации
 async function loginAfterRegister(username, password) {
     const email = `${username}@company.com`;
-    
+
     const { data, error } = await supabase.auth.signInWithPassword({
         email: email,
         password: password,
@@ -166,7 +155,6 @@ async function login() {
         return;
     }
 
-    // Создаем email на основе никнейма
     const email = `${username}@company.com`;
 
     try {
@@ -184,7 +172,6 @@ async function login() {
             return;
         }
 
-        // Если вход успешен
         showMessage('Вход выполнен успешно!', 'success');
         setTimeout(() => {
             checkAuth();
@@ -205,13 +192,10 @@ async function logout() {
 // Проверка авторизации
 async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (session) {
-        // Показываем приложение
         document.getElementById('auth-screen').classList.add('hidden');
         document.getElementById('app-screen').classList.remove('hidden');
-        
-        // Загружаем данные пользователя
         await loadUserData();
         await loadShifts();
     }
@@ -220,9 +204,8 @@ async function checkAuth() {
 // Загрузка данных пользователя
 async function loadUserData() {
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (user) {
-        // Получаем профиль пользователя
         const { data: profile } = await supabase
             .from('profiles')
             .select('full_name, username')
@@ -242,7 +225,7 @@ async function addShift() {
     const date = document.getElementById('shift-date').value;
     const startTime = document.getElementById('start-time').value;
     const endTime = document.getElementById('end-time').value;
-    
+
     if (!date || !startTime || !endTime) {
         alert('Заполните все поля!');
         return;
@@ -265,18 +248,17 @@ async function addShift() {
 
     const { error } = await supabase
         .from('shifts')
-        .insert([{ 
+        .insert([{
             user_id: user.id,
-            date: date, 
-            start_time: startTime, 
-            end_time: endTime 
+            date: date,
+            start_time: startTime,
+            end_time: endTime
         }]);
 
     if (error) {
         alert('Ошибка: ' + error.message);
     } else {
         loadShifts();
-        // Очищаем поля
         document.getElementById('shift-date').value = '';
         document.getElementById('start-time').value = '';
         document.getElementById('end-time').value = '';
@@ -349,7 +331,7 @@ async function deleteShift(shiftId) {
 // Запускаем проверку авторизации при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
-    
+
     // Очищаем поля форм при загрузке
     document.getElementById('login-username').value = '';
     document.getElementById('login-password').value = '';
@@ -357,7 +339,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('register-fullname').value = '';
     document.getElementById('register-password').value = '';
     document.getElementById('register-confirm').value = '';
-    
+
     // Устанавливаем сегодняшнюю дату по умолчанию
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('shift-date').value = today;
