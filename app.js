@@ -6,9 +6,25 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Глобальные переменные
-let currentUser = null;
 let currentDate = new Date();
-let currentEvents = [];
+let shifts = loadShifts();
+let selectedDate = null;
+
+// Элементы DOM
+const calendarEl = document.getElementById('calendar');
+const currentMonthEl = document.getElementById('current-month');
+const prevMonthBtn = document.getElementById('prev-month');
+const nextMonthBtn = document.getElementById('next-month');
+const modal = document.getElementById('shift-modal');
+const selectedDateEl = document.getElementById('selected-date');
+const startTimeInput = document.getElementById('start-time');
+const endTimeInput = document.getElementById('end-time');
+const saveShiftBtn = document.getElementById('save-shift');
+const deleteShiftBtn = document.getElementById('delete-shift');
+const cancelShiftBtn = document.getElementById('cancel-shift');
+const closeBtn = document.querySelector('.close');
+const shiftsCountEl = document.getElementById('shifts-count');
+const totalHoursEl = document.getElementById('total-hours');
 
 // Проверка валидности никнейма
 function isValidUsername(username) {
@@ -255,49 +271,121 @@ async function loadUserData() {
 }
 
 // Рендер календаря
+// Инициализация
+renderCalendar();
+updateStats();
+setupEventListeners();
+
+function setupEventListeners() {
+    prevMonthBtn.addEventListener('click', () => changeMonth(-1));
+    nextMonthBtn.addEventListener('click', () => changeMonth(1));
+    
+    saveShiftBtn.addEventListener('click', saveShift);
+    deleteShiftBtn.addEventListener('click', deleteShift);
+    cancelShiftBtn.addEventListener('click', closeModal);
+    closeBtn.addEventListener('click', closeModal);
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+}
+
 function renderCalendar() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     
-    const currentMonth = document.getElementById('current-month');
-    if (currentMonth) {
-        currentMonth.textContent = new Date(year, month, 1).toLocaleDateString('ru-RU', {
-            month: 'long',
-            year: 'numeric'
-        });
-    }
-
+    currentMonthEl.textContent = currentDate.toLocaleDateString('ru-RU', {
+        month: 'long',
+        year: 'numeric'
+    });
+    
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
+    const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
     
-    // Получаем день недели первого дня месяца (0 - воскресенье, 1 - понедельник, и т.д.)
-    const startDayOfWeek = firstDay.getDay();
-    // Преобразуем воскресенье (0) в 6, чтобы неделя начиналась с понедельника
-    const startDay = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
-
-    const calendar = document.getElementById('calendar');
-    if (!calendar) return;
+    calendarEl.innerHTML = '';
     
-    calendar.innerHTML = '';
-
-    // Дни предыдущего месяца
+    // Дни из предыдущего месяца
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = startDay - 1; i >= 0; i--) {
-        const day = document.createElement('div');
-        day.className = 'day other-month';
-        day.innerHTML = `<div class="day-number">${prevMonthLastDay - i}</div>`;
-        calendar.appendChild(day);
+        const day = prevMonthLastDay - i;
+        const date = new Date(year, month - 1, day);
+        addDayToCalendar(date, true);
     }
-
+    
     // Дни текущего месяца
-    const today = new Date();
-    for (let i = 1; i <= daysInMonth; i++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-        const day = document.createElement('div');
-        day.className = 'day';
-        day.innerHTML = `<div class="day-number">${i}</div>`;
-        day.dataset.date = dateStr;
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        addDayToCalendar(date, false);
+    }
+    
+    // Дни следующего месяца
+    const totalCells = 42; // 6 недель
+    const remainingCells = totalCells - (startDay + daysInMonth);
+    for (let day = 1; day <= remainingCells; day++) {
+        const date = new Date(year, month + 1, day);
+        addDayToCalendar(date, true);
+    }
+}
+
+function addDayToCalendar(date, isOtherMonth) {
+    const dayEl = document.createElement('div');
+    dayEl.className = 'day';
+    
+    if (isOtherMonth) {
+        dayEl.classList.add('other-month');
+    }
+    
+    // Помечаем выходные
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+        dayEl.classList.add('weekend');
+    }
+    
+    const dayNumber = date.getDate();
+    const dateKey = formatDateKey(date);
+    const shift = shifts[dateKey];
+    
+    if (shift) {
+        dayEl.classList.add('has-shift');
+        dayEl.innerHTML = `
+            <div class="day-number">${dayNumber}</div>
+            <div class="day-shift">${shift.start}-${shift.end}</div>
+        `;
+    } else {
+        dayEl.innerHTML = `<div class="day-number">${dayNumber}</div>`;
+    }
+    
+    dayEl.addEventListener('click', () => openModal(date));
+    calendarEl.appendChild(dayEl);
+}
+
+function openModal(date) {
+    selectedDate = date;
+    const dateKey = formatDateKey(date);
+    const shift = shifts[dateKey];
+    
+    selectedDateEl.textContent = date.toLocaleDateString('ru-RU', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+    
+    if (shift) {
+        startTimeInput.value = shift.start;
+        endTimeInput.value = shift.end;
+        deleteShiftBtn.style.display = 'block';
+    } else {
+        startTimeInput.value = '09:00';
+        endTimeInput.value = '18:00';
+        deleteShiftBtn.style.display = 'none';
+    }
+    
+    modal.style.display = 'block';
+}
+
 
         // Проверка на сегодня
         if (year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) {
