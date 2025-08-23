@@ -1,40 +1,205 @@
-body {
-    font-family: Arial, sans-serif;
-    line-height: 1.6;
+* {
+    box-sizing: border-box;
     margin: 0;
-    padding: 20px;
-    max-width: 800px;
-    margin: 0 auto;
+    padding: 0;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    line-height: 1.6;
+    background: #f5f5f5;
+    color: #333;
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
-button {
+/* Экран авторизации */
+#auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.auth-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+.auth-container h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #333;
+}
+
+.auth-container input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.auth-container button {
+    width: 100%;
+    padding: 12px;
     background: #007bff;
     color: white;
     border: none;
-    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+.auth-container button:hover {
+    background: #0056b3;
+}
+
+.auth-container a {
+    color: #007bff;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.auth-container a:hover {
+    text-decoration: underline;
+}
+
+#auth-message {
+    padding: 10px;
+    margin-top: 15px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.error {
+    background: #ffe6e6;
+    color: #d63031;
+    border: 1px solid #ff7675;
+}
+
+.success {
+    background: #e6f7e6;
+    color: #27ae60;
+    border: 1px solid #2ecc71;
+}
+
+/* Основное приложение */
+#app-screen {
+    min-height: 100vh;
+    background: #f5f5f5;
+}
+
+header {
+    background: white;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-info button {
+    padding: 8px 16px;
+    background: #dc3545;
+    color: white;
+    border: none;
     border-radius: 5px;
     cursor: pointer;
 }
 
-button:hover {
-    background: #0056b3;
+.user-info button:hover {
+    background: #c82333;
+}
+
+main {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.add-shift {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.add-shift input {
+    padding: 10px;
+    margin: 0 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.add-shift button {
+    padding: 10px 20px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.add-shift button:hover {
+    background: #218838;
+}
+
+.sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .shift {
     background: #f8f9fa;
-    padding: 10px;
+    padding: 12px;
     margin: 10px 0;
-    border-radius: 5px;
+    border-radius: 8px;
     border-left: 4px solid #007bff;
 }
 
-input {
-    padding: 8px;
-    margin: 5px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+.shift.my-shift {
+    border-left-color: #28a745;
+    background: #e8f5e8;
+}
+
+@media (max-width: 768px) {
+    .sections {
+        grid-template-columns: 1fr;
+    }
+    
+    .auth-container {
+        margin: 1rem;
+        padding: 1.5rem;
+    }
+    
+    header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
 }
