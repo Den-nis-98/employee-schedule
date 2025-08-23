@@ -13,8 +13,8 @@
             <h1>График сотрудников</h1>
             
             <div id="login-form">
-                <h2>Вход</h2>
-                <input type="text" id="login-fullname" placeholder="Фамилия Имя" required>
+                <h2>Вход в систему</h2>
+                <input type="text" id="login-username" placeholder="Ваш никнейм" required>
                 <input type="password" id="login-password" placeholder="Пароль" required>
                 <button onclick="login()">Войти</button>
                 <p>Нет аккаунта? <a href="#" onclick="showRegister()">Зарегистрироваться</a></p>
@@ -22,6 +22,7 @@
 
             <div id="register-form" class="hidden">
                 <h2>Регистрация</h2>
+                <input type="text" id="register-username" placeholder="Придумайте никнейм (латиница)" required>
                 <input type="text" id="register-fullname" placeholder="Фамилия Имя" required>
                 <input type="password" id="register-password" placeholder="Пароль" required>
                 <input type="password" id="register-confirm" placeholder="Повторите пароль" required>
@@ -68,9 +69,6 @@
 
     <!-- Подключаем Supabase -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="app.js"></script>
-</body>
-</html>
     <script src="app.js"></script>
 </body>
 </html>
