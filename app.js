@@ -5,14 +5,28 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // Создаем подключение
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Хэш-функция для пароля (простая)
+// Генерация правильного email из ФИО
+function generateEmail(fullname) {
+    // Преобразуем в латиницу и убираем спецсимволы
+    const latinName = fullname
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // удаляем диакритические знаки
+        .replace(/[^a-z0-9\s]/g, '') // удаляем спецсимволы
+        .replace(/\s+/g, '.') // заменяем пробелы на точки
+        .substring(0, 30); // ограничиваем длину
+    
+    return `${latinName}@employee.com`;
+}
+
+// Хэш-функция для пароля
 function simpleHash(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
         hash = ((hash << 5) - hash) + str.charCodeAt(i);
         hash = hash & hash;
     }
-    return hash.toString();
+    return Math.abs(hash).toString();
 }
 
 // Показ форм авторизации
@@ -60,8 +74,8 @@ async function register() {
         return;
     }
 
-    // Создаем уникальный email на основе ФИО
-    const email = `${fullname.toLowerCase().replace(/\s+/g, '.')}@company.com`;
+    // Создаем правильный email
+    const email = generateEmail(fullname);
     const hashedPassword = simpleHash(password);
 
     try {
@@ -75,7 +89,7 @@ async function register() {
             if (error.message.includes('already registered')) {
                 showMessage('Пользователь с таким ФИО уже существует', 'error');
             } else {
-                showMessage('Ошибка: ' + error.message, 'error');
+                showMessage('Ошибка регистрации: ' + error.message, 'error');
             }
             return;
         }
@@ -93,12 +107,19 @@ async function register() {
                 ]);
 
             if (profileError) {
+                // Если ошибка при создании профиля, удаляем пользователя
+                await supabase.auth.admin.deleteUser(data.user.id);
                 showMessage('Ошибка создания профиля: ' + profileError.message, 'error');
                 return;
             }
 
             showMessage('Регистрация успешна! Теперь войдите в систему', 'success');
             showLogin();
+            
+            // Очищаем поля регистрации
+            document.getElementById('register-fullname').value = '';
+            document.getElementById('register-password').value = '';
+            document.getElementById('register-confirm').value = '';
         }
     } catch (error) {
         showMessage('Ошибка регистрации: ' + error.message, 'error');
@@ -116,7 +137,7 @@ async function login() {
     }
 
     // Создаем email на основе ФИО
-    const email = `${fullname.toLowerCase().replace(/\s+/g, '.')}@company.com`;
+    const email = generateEmail(fullname);
     const hashedPassword = simpleHash(password);
 
     try {
@@ -129,13 +150,17 @@ async function login() {
             if (error.message.includes('Invalid login credentials')) {
                 showMessage('Неверные ФИО или пароль', 'error');
             } else {
-                showMessage('Ошибка: ' + error.message, 'error');
+                showMessage('Ошибка входа: ' + error.message, 'error');
             }
             return;
         }
 
-        // Если вход успешен, проверяем авторизацию
-        checkAuth();
+        // Если вход успешен
+        showMessage('Вход выполнен успешно!', 'success');
+        setTimeout(() => {
+            checkAuth();
+        }, 1000);
+
     } catch (error) {
         showMessage('Ошибка входа: ' + error.message, 'error');
     }
@@ -193,6 +218,19 @@ async function addShift() {
     }
 
     const { data: { user } } = await supabase.auth.getUser();
+
+    // Проверяем, нет ли уже смены на эту дату
+    const { data: existingShift } = await supabase
+        .from('shifts')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('date', date)
+        .single();
+
+    if (existingShift) {
+        alert('У вас уже есть смена на эту дату!');
+        return;
+    }
 
     const { error } = await supabase
         .from('shifts')
