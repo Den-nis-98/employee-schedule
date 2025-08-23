@@ -337,14 +337,6 @@ function updateStats() {
     const userShifts = currentEvents.filter(event => event.user_id === currentUser.id);
     document.getElementById('shifts-count').textContent = userShifts.length;
 
-    let totalHoursCount = 0;
-    userShifts.forEach(shift => {
-        const start = new Date(`2000-01-01T${shift.start_time}`);
-        const end = new Date(`2000-01-01T${shift.end_time}`);
-        totalHoursCount += (end - start) / (1000 * 60 * 60);
-    });
-
-    document.getElementById('total-hours').textContent = totalHoursCount.toFixed(1);
 }
 
 // Показать модальное окно
