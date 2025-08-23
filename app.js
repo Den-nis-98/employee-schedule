@@ -229,6 +229,7 @@ async function loadUserData() {
 }
 
 // Рендер календаря
+// Рендер календаря
 function renderCalendar() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -251,7 +252,7 @@ function renderCalendar() {
     for (let i = startDay - 1; i >= 0; i--) {
         const day = document.createElement('div');
         day.className = 'day other-month';
-        day.textContent = prevMonthLastDay - i;
+        day.innerHTML = `<div class="day-number">${prevMonthLastDay - i}</div>`;
         calendar.appendChild(day);
     }
 
@@ -269,7 +270,7 @@ function renderCalendar() {
             day.classList.add('today');
         }
 
-        // Проверка на наличие смены и отображение часов
+        // Проверка на наличие смены и отображение времени
         const userShift = currentEvents.find(event => 
             event.date === dateStr && event.user_id === currentUser?.id
         );
@@ -277,17 +278,11 @@ function renderCalendar() {
         if (userShift) {
             day.classList.add('has-shift');
             
-            // Рассчитываем продолжительность смены
-            const start = new Date(`2000-01-01T${userShift.start_time}`);
-            const end = new Date(`2000-01-01T${userShift.end_time}`);
-            const duration = (end - start) / (1000 * 60 * 60);
-            
-            // Добавляем элемент с часами
-            const hoursElement = document.createElement('div');
-            hoursElement.className = 'shift-hours';
-            hoursElement.textContent = `${duration.toFixed(1)}ч`;
-            hoursElement.title = `${userShift.start_time} - ${userShift.end_time}`;
-            day.appendChild(hoursElement);
+            // Добавляем элемент с временем смены
+            const timeElement = document.createElement('div');
+            timeElement.className = 'shift-time';
+            timeElement.textContent = `${userShift.start_time}-${userShift.end_time}`;
+            day.appendChild(timeElement);
         }
 
         day.addEventListener('click', () => showModal(dateStr));
