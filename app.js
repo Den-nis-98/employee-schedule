@@ -5,14 +5,14 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // Создаем подключение
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Проверка валидности никнейма (только латиница и цифры)
+// Проверка валидности никнейма
 function isValidUsername(username) {
     return /^[a-zA-Z0-9_]{3,20}$/.test(username);
 }
 
 // Проверка валидности ФИО
 function isValidFullname(fullname) {
-    return fullname.trim().length >= 3 && /[а-яА-Яa-zA-Z]/.test(fullname);
+    return fullname.trim().length >= 3;
 }
 
 // Показ форм авторизации
@@ -39,7 +39,7 @@ function hideMessage() {
     document.getElementById('auth-message').classList.add('hidden');
 }
 
-// Регистрация
+// Регистрация (упрощенная версия)
 async function register() {
     const username = document.getElementById('register-username').value.trim();
     const fullname = document.getElementById('register-fullname').value.trim();
@@ -52,12 +52,7 @@ async function register() {
     }
 
     if (!isValidUsername(username)) {
-        showMessage('Никнейм должен содержать только латинские буквы, цифры и подчеркивание (3-20 символов)', 'error');
-        return;
-    }
-
-    if (!isValidFullname(fullname)) {
-        showMessage('ФИО должно содержать хотя бы 3 буквы', 'error');
+        showMessage('Никнейм: только латинские буквы, цифры и _ (3-20 символов)', 'error');
         return;
     }
 
@@ -71,66 +66,62 @@ async function register() {
         return;
     }
 
-    // Создаем email на основе никнейма
     const email = `${username}@company.com`;
 
     try {
-        // Проверяем, свободен ли никнейм
-        const { data: existingUser } = await supabase
-            .from('profiles')
-            .select('username')
-            .eq('username', username)
-            .single();
+        showMessage('Регистрация...', 'success');
 
-        if (existingUser) {
-            showMessage('Этот никнейм уже занят', 'error');
-            return;
-        }
-
-        // Регистрируем пользователя
-        const { data, error } = await supabase.auth.signUp({
+        // 1. Сначала регистрируем пользователя в Auth
+        const { data: authData, error: authError } = await supabase.auth.signUp({
             email: email,
             password: password,
         });
 
-        if (error) {
-            if (error.message.includes('already registered')) {
-                showMessage('Пользователь с таким никнеймом уже существует', 'error');
+        if (authError) {
+            if (authError.message.includes('already registered')) {
+                showMessage('Никнейм уже занят', 'error');
             } else {
-                showMessage('Ошибка регистрации: ' + error.message, 'error');
+                showMessage('Ошибка регистрации: ' + authError.message, 'error');
             }
             return;
         }
 
-        // Создаем профиль пользователя
-        if (data.user) {
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .insert([
-                    { 
-                        id: data.user.id, 
-                        username: username,
-                        full_name: fullname,
-                        email: email
-                    }
-                ]);
-
-            if (profileError) {
-                // Если ошибка при создании профиля, удаляем пользователя
-                await supabase.auth.admin.deleteUser(data.user.id);
-                showMessage('Ошибка создания профиля: ' + profileError.message, 'error');
-                return;
-            }
-
-            showMessage('Регистрация успешна! Входим в систему...', 'success');
-            
-            // Автоматически входим после регистрации
-            setTimeout(() => {
-                loginAfterRegister(username, password);
-            }, 2000);
+        if (!authData.user) {
+            showMessage('Ошибка создания пользователя', 'error');
+            return;
         }
+
+        // 2. Ждем немного чтобы пользователь создался в системе
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // 3. Создаем профиль в отдельной таблице
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .insert([
+                {
+                    id: authData.user.id,
+                    username: username,
+                    full_name: fullname,
+                    email: email
+                }
+            ]);
+
+        if (profileError) {
+            showMessage('Ошибка создания профиля: ' + profileError.message, 'error');
+            // Пробуем войти если профиль уже существует
+            await loginAfterRegister(username, password);
+            return;
+        }
+
+        showMessage('Регистрация успешна! Входим...', 'success');
+        
+        // Автоматически входим
+        setTimeout(() => {
+            loginAfterRegister(username, password);
+        }, 2000);
+
     } catch (error) {
-        showMessage('Ошибка регистрации: ' + error.message, 'error');
+        showMessage('Ошибка: ' + error.message, 'error');
     }
 }
 
@@ -138,15 +129,19 @@ async function register() {
 async function loginAfterRegister(username, password) {
     const email = `${username}@company.com`;
     
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-    });
+    try {
+        const { error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
 
-    if (error) {
-        showMessage('Ошибка входа: ' + error.message, 'error');
-    } else {
-        checkAuth();
+        if (error) {
+            showMessage('Ошибка входа: ' + error.message, 'error');
+        } else {
+            checkAuth();
+        }
+    } catch (error) {
+        showMessage('Ошибка: ' + error.message, 'error');
     }
 }
 
@@ -160,39 +155,28 @@ async function login() {
         return;
     }
 
-    if (!isValidUsername(username)) {
-        showMessage('Введите корректный никнейм', 'error');
-        return;
-    }
-
-    // Создаем email на основе никнейма
     const email = `${username}@company.com`;
 
     try {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
             email: email,
             password: password,
         });
 
         if (error) {
-            if (error.message.includes('Invalid login credentials')) {
-                showMessage('Неверный никнейм или пароль', 'error');
-            } else {
-                showMessage('Ошибка входа: ' + error.message, 'error');
-            }
+            showMessage('Неверный никнейм или пароль', 'error');
             return;
         }
 
-        // Если вход успешен
-        showMessage('Вход выполнен успешно!', 'success');
-        setTimeout(() => {
-            checkAuth();
-        }, 1000);
+        showMessage('Вход успешен!', 'success');
+        setTimeout(() => checkAuth(), 1000);
 
     } catch (error) {
-        showMessage('Ошибка входа: ' + error.message, 'error');
+        showMessage('Ошибка: ' + error.message, 'error');
     }
 }
+
+// Остальные функции остаются без изменений (logout, checkAuth, loadUserData, addShift, loadShifts, deleteShift)
 
 // Выход
 async function logout() {
@@ -206,11 +190,8 @@ async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (session) {
-        // Показываем приложение
         document.getElementById('auth-screen').classList.add('hidden');
         document.getElementById('app-screen').classList.remove('hidden');
-        
-        // Загружаем данные пользователя
         await loadUserData();
         await loadShifts();
     }
@@ -221,7 +202,6 @@ async function loadUserData() {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (user) {
-        // Получаем профиль пользователя
         const { data: profile } = await supabase
             .from('profiles')
             .select('full_name, username')
@@ -231,7 +211,22 @@ async function loadUserData() {
         if (profile) {
             document.getElementById('user-name').textContent = `${profile.full_name} (@${profile.username})`;
         } else {
-            document.getElementById('user-name').textContent = user.email;
+            // Если профиля нет, пробуем его создать
+            const username = user.email.split('@')[0];
+            const { error } = await supabase
+                .from('profiles')
+                .insert([
+                    {
+                        id: user.id,
+                        username: username,
+                        full_name: username,
+                        email: user.email
+                    }
+                ]);
+
+            if (!error) {
+                document.getElementById('user-name').textContent = `${username} (@${username})`;
+            }
         }
     }
 }
@@ -275,7 +270,6 @@ async function addShift() {
         alert('Ошибка: ' + error.message);
     } else {
         loadShifts();
-        // Очищаем поля
         document.getElementById('shift-date').value = '';
         document.getElementById('start-time').value = '';
         document.getElementById('end-time').value = '';
@@ -303,30 +297,26 @@ async function loadShifts() {
         .order('date');
 
     // Показываем мои смены
-    if (myShifts && myShifts.length > 0) {
-        document.getElementById('my-shifts').innerHTML = myShifts.map(shift => `
+    document.getElementById('my-shifts').innerHTML = myShifts && myShifts.length > 0 
+        ? myShifts.map(shift => `
             <div class="shift my-shift">
                 <strong>${shift.date}</strong><br>
                 ${shift.start_time} - ${shift.end_time}
                 <button onclick="deleteShift('${shift.id}')" class="delete-btn">✕</button>
             </div>
-        `).join('');
-    } else {
-        document.getElementById('my-shifts').innerHTML = '<p>У вас пока нет смен</p>';
-    }
+        `).join('')
+        : '<p>У вас пока нет смен</p>';
 
     // Показываем общий график
-    if (allShifts && allShifts.length > 0) {
-        document.getElementById('all-shifts').innerHTML = allShifts.map(shift => `
+    document.getElementById('all-shifts').innerHTML = allShifts && allShifts.length > 0 
+        ? allShifts.map(shift => `
             <div class="shift">
                 <strong>${shift.profiles?.full_name || 'Сотрудник'}</strong>
                 <small>(@${shift.profiles?.username || 'unknown'})</small><br>
                 ${shift.date}: ${shift.start_time} - ${shift.end_time}
             </div>
-        `).join('');
-    } else {
-        document.getElementById('all-shifts').innerHTML = '<p>Пока нет ни одной смены</p>';
-    }
+        `).join('')
+        : '<p>Пока нет ни одной смены</p>';
 }
 
 // Удаление смены
@@ -345,19 +335,15 @@ async function deleteShift(shiftId) {
     }
 }
 
-// Запускаем проверку авторизации при загрузке страницы
+// Запускаем при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
-    
-    // Очищаем поля форм при загрузке
     document.getElementById('login-username').value = '';
     document.getElementById('login-password').value = '';
     document.getElementById('register-username').value = '';
     document.getElementById('register-fullname').value = '';
     document.getElementById('register-password').value = '';
     document.getElementById('register-confirm').value = '';
-    
-    // Устанавливаем сегодняшнюю дату по умолчанию
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('shift-date').value = today;
 });
