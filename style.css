@@ -38,3 +38,28 @@ input {
     border: 1px solid #ddd;
     border-radius: 4px;
 }
+/* Добавь эти стили в конец файла */
+
+.delete-btn {
+    background: #dc3545 !important;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    padding: 0;
+    margin-left: 10px;
+    cursor: pointer;
+    float: right;
+}
+
+.delete-btn:hover {
+    background: #c82333 !important;
+}
+
+.shift {
+    position: relative;
+    padding-right: 40px;
+}
+
+/* Остальные стили остаются как были */
