@@ -3,121 +3,507 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>График работы</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <title>Расписание сотрудников</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+        
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #27ae60;
+        }
+        
+        .btn-danger {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        select, input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .schedule-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: var(--primary);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .shift {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        .morning {
+            background-color: #d4e6f1;
+            color: #2874a6;
+        }
+        
+        .afternoon {
+            background-color: #d1f2eb;
+            color: #1d8348;
+        }
+        
+        .evening {
+            background-color: #fdebd0;
+            color: #b7950b;
+        }
+        
+        .night {
+            background-color: #ebedef;
+            color: #566573;
+        }
+        
+        .dayoff {
+            background-color: #f9ebea;
+            color: #c0392b;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .close {
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem;
+            color: #7f8c8d;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filters {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Экран авторизации -->
-    <div id="auth-screen">
-        <div class="auth-container">
-            <h1>📅 График работы</h1>
+    <div class="container">
+        <header>
+            <h1>Расписание сотрудников</h1>
+        </header>
+        
+        <div class="controls">
+            <div class="filters">
+                <select id="departmentFilter">
+                    <option value="">Все отделы</option>
+                    <option value="sales">Продажи</option>
+                    <option value="support">Поддержка</option>
+                    <option value="development">Разработка</option>
+                </select>
+                
+                <select id="weekFilter">
+                    <option value="current">Текущая неделя</option>
+                    <option value="next">Следующая неделя</option>
+                </select>
+            </div>
             
-            <div id="login-form">
-                <h2>Вход в систему</h2>
-                <input type="text" id="login-username" placeholder="Ваш никнейм" required>
-                <input type="password" id="login-password" placeholder="Пароль" required>
-                <button onclick="login()" class="btn-primary">Войти</button>
-                <p>Нет аккаунта? <a href="#" onclick="showRegister()">Зарегистрироваться</a></p>
+            <button class="btn btn-primary" id="addShiftBtn">Добавить смену</button>
+        </div>
+        
+        <div class="schedule-container">
+            <table id="scheduleTable">
+                <thead>
+                    <tr>
+                        <th>Сотрудник</th>
+                        <th>Понедельник</th>
+                        <th>Вторник</th>
+                        <th>Среда</th>
+                        <th>Четверг</th>
+                        <th>Пятница</th>
+                        <th>Суббота</th>
+                        <th>Воскресенье</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Данные будут заполнены через JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="footer">
+            <p>© 2023 Система управления расписанием сотрудников</p>
+        </div>
+    </div>
+    
+    <!-- Модальное окно для добавления/редактирования смены -->
+    <div class="modal" id="shiftModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Добавить смену</h2>
+                <span class="close">&times;</span>
             </div>
-
-            <div id="register-form" class="hidden">
-                <h2>Регистрация</h2>
-                <input type="text" id="register-username" placeholder="Придумайте никнейм (латиница)" required>
-                <input type="text" id="register-fullname" placeholder="Фамилия Имя" required>
-                <input type="password" id="register-password" placeholder="Пароль" required>
-                <input type="password" id="register-confirm" placeholder="Повторите пароль" required>
-                <button onclick="register()" class="btn-primary">Зарегистрироваться</button>
-                <p>Уже есть аккаунт? <a href="#" onclick="showLogin()">Войти</a></p>
-            </div>
-
-            <div id="auth-message" class="hidden"></div>
+            
+            <form id="shiftForm">
+                <div class="form-group">
+                    <label for="employee">Сотрудник</label>
+                    <select class="form-control" id="employee" required>
+                        <option value="">Выберите сотрудника</option>
+                        <option value="1">Иванов А.С.</option>
+                        <option value="2">Петрова М.И.</option>
+                        <option value="3">Сидоров В.П.</option>
+                        <option value="4">Кузнецова О.В.</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="date">Дата</label>
+                    <input type="date" class="form-control" id="date" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="shiftType">Тип смены</label>
+                    <select class="form-control" id="shiftType" required>
+                        <option value="">Выберите тип смены</option>
+                        <option value="morning">Утренняя (9:00-17:00)</option>
+                        <option value="afternoon">Дневная (13:00-21:00)</option>
+                        <option value="evening">Вечерняя (17:00-01:00)</option>
+                        <option value="night">Ночная (21:00-9:00)</option>
+                        <option value="dayoff">Выходной</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-success">Сохранить</button>
+            </form>
         </div>
     </div>
 
-    <!-- Основное приложение -->
-    <div id="app" class="hidden">
-        <div class="header">
-            <div class="user-info">
-                <span id="user-name"></span>
-                <button onclick="logout()" class="btn-secondary">Выйти</button>
-            </div>
-            <h1>📅 Мой график работы</h1>
-            <div class="month-nav">
-                <button id="prev-month" class="btn-icon">←</button>
-                <span id="current-month">Май 2024</span>
-                <button id="next-month" class="btn-icon">→</button>
-            </div>
-        </div>
-
-        <div class="calendar-container">
-            <div class="weekdays">
-                <div>Пн</div>
-                <div>Вт</div>
-                <div>Ср</div>
-                <div>Чт</div>
-                <div>Пт</div>
-                <div>Сб</div>
-                <div>Вс</div>
-            </div>
-            <div id="calendar" class="calendar"></div>
-        </div>
-
-        <div id="shift-modal" class="modal hidden">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Добавить смену</h3>
-                    <span class="close">&times;</span>
-                </div>
-                <div class="modal-body">
-                    <div class="selected-date" id="selected-date"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Данные о сотрудниках
+            const employees = [
+                { id: 1, name: 'Иванов А.С.', department: 'sales' },
+                { id: 2, name: 'Петрова М.И.', department: 'support' },
+                { id: 3, name: 'Сидоров В.П.', department: 'development' },
+                { id: 4, name: 'Кузнецова О.В.', department: 'sales' }
+            ];
+            
+            // Данные о сменах (в реальном приложении будут загружаться с сервера)
+            let shifts = [
+                { id: 1, employeeId: 1, date: '2023-10-16', type: 'morning' },
+                { id: 2, employeeId: 2, date: '2023-10-16', type: 'afternoon' },
+                { id: 3, employeeId: 3, date: '2023-10-17', type: 'evening' },
+                { id: 4, employeeId: 4, date: '2023-10-18', type: 'night' },
+                { id: 5, employeeId: 1, date: '2023-10-19', type: 'morning' },
+                { id: 6, employeeId: 2, date: '2023-10-20', type: 'dayoff' }
+            ];
+            
+            // Элементы DOM
+            const scheduleTable = document.getElementById('scheduleTable');
+            const departmentFilter = document.getElementById('departmentFilter');
+            const weekFilter = document.getElementById('weekFilter');
+            const addShiftBtn = document.getElementById('addShiftBtn');
+            const shiftModal = document.getElementById('shiftModal');
+            const closeModal = document.querySelector('.close');
+            const shiftForm = document.getElementById('shiftForm');
+            const modalTitle = document.getElementById('modalTitle');
+            
+            // Получить даты текущей недели
+            function getWeekDates() {
+                const now = new Date();
+                const dayOfWeek = now.getDay(); // 0 (воскресенье) до 6 (суббота)
+                const startDate = new Date(now);
+                
+                // Устанавливаем на понедельник
+                startDate.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+                startDate.setHours(0, 0, 0, 0);
+                
+                const dates = [];
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(startDate);
+                    date.setDate(startDate.getDate() + i);
+                    dates.push(date.toISOString().split('T')[0]);
+                }
+                
+                return dates;
+            }
+            
+            // Отобразить расписание
+            function renderSchedule() {
+                const tbody = scheduleTable.querySelector('tbody');
+                tbody.innerHTML = '';
+                
+                const weekDates = getWeekDates();
+                const department = departmentFilter.value;
+                
+                // Фильтрация сотрудников по отделу
+                const filteredEmployees = department 
+                    ? employees.filter(emp => emp.department === department)
+                    : employees;
+                
+                // Создание строк для каждого сотрудника
+                filteredEmployees.forEach(employee => {
+                    const row = document.createElement('tr');
                     
-                    <div class="time-inputs">
-                        <div class="time-input-group">
-                            <label>Начало смены:</label>
-                            <input type="time" id="start-time" value="09:00">
-                        </div>
-                        <div class="time-input-group">
-                            <label>Конец смены:</label>
-                            <input type="time" id="end-time" value="18:00">
-                        </div>
-                    </div>
-
-                    <div class="modal-actions">
-                        <button id="save-shift" class="btn-primary">Сохранить</button>
-                        <button id="delete-shift" class="btn-danger">Удалить</button>
-                        <button id="cancel-shift" class="btn-secondary">Отмена</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="stats">
-            <div class="stat-item">
-                <span>Смен в месяце:</span>
-                <strong id="shifts-count">0</strong>
-            </div>
-            <div class="stat-item">
-                <span>Всего часов:</span>
-                <strong id="total-hours">0</strong>
-            </div>
-        </div>
-
-        <!-- Кнопка переключения между личным и общим графиком -->
-        <div class="view-toggle">
-            <button id="personal-view" class="btn-primary active">Мой график</button>
-            <button id="general-view" class="btn-secondary">Общий график</button>
-        </div>
-
-        <!-- Контейнер для общего графика -->
-        <div id="general-schedule" class="hidden">
-            <h3>👥 Общий график сотрудников</h3>
-            <div id="all-shifts" class="shifts-list"></div>
-        </div>
-    </div>
-
-    <!-- Подключаем Supabase -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="app.js"></script>
+                    // Ячейка с именем сотрудника
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = employee.name;
+                    nameCell.style.fontWeight = 'bold';
+                    row.appendChild(nameCell);
+                    
+                    // Ячейки для каждого дня недели
+                    weekDates.forEach(date => {
+                        const cell = document.createElement('td');
+                        
+                        // Поиск смены для этого сотрудника на эту дату
+                        const shift = shifts.find(s => 
+                            s.employeeId === employee.id && s.date === date
+                        );
+                        
+                        if (shift) {
+                            const shiftSpan = document.createElement('span');
+                            shiftSpan.className = `shift ${shift.type}`;
+                            
+                            switch(shift.type) {
+                                case 'morning':
+                                    shiftSpan.textContent = 'Утро';
+                                    break;
+                                case 'afternoon':
+                                    shiftSpan.textContent = 'День';
+                                    break;
+                                case 'evening':
+                                    shiftSpan.textContent = 'Вечер';
+                                    break;
+                                case 'night':
+                                    shiftSpan.textContent = 'Ночь';
+                                    break;
+                                case 'dayoff':
+                                    shiftSpan.textContent = 'Выходной';
+                                    break;
+                            }
+                            
+                            cell.appendChild(shiftSpan);
+                        }
+                        
+                        row.appendChild(cell);
+                    });
+                    
+                    tbody.appendChild(row);
+                });
+            }
+            
+            // Показать модальное окно
+            function showModal() {
+                shiftModal.style.display = 'flex';
+            }
+            
+            // Скрыть модальное окно
+            function hideModal() {
+                shiftModal.style.display = 'none';
+                shiftForm.reset();
+            }
+            
+            // Обработчик отправки формы
+            shiftForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const employeeId = parseInt(document.getElementById('employee').value);
+                const date = document.getElementById('date').value;
+                const type = document.getElementById('shiftType').value;
+                
+                // Добавление новой смены
+                const newShift = {
+                    id: shifts.length > 0 ? Math.max(...shifts.map(s => s.id)) + 1 : 1,
+                    employeeId,
+                    date,
+                    type
+                };
+                
+                shifts.push(newShift);
+                renderSchedule();
+                hideModal();
+                
+                // В реальном приложении здесь будет отправка данных на сервер
+                console.log('Добавлена новая смена:', newShift);
+            });
+            
+            // Обработчики событий
+            departmentFilter.addEventListener('change', renderSchedule);
+            weekFilter.addEventListener('change', renderSchedule);
+            addShiftBtn.addEventListener('click', showModal);
+            closeModal.addEventListener('click', hideModal);
+            
+            // Закрытие модального окна при клике вне его
+            window.addEventListener('click', function(e) {
+                if (e.target === shiftModal) {
+                    hideModal();
+                }
+            });
+            
+            // Инициализация расписания
+            renderSchedule();
+        });
+    </script>
 </body>
 </html>
