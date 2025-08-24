@@ -514,27 +514,51 @@ async function loadAllShifts() {
     try {
         console.log("Загружаем все смены за период:", startOfMonth, endOfMonth);
 
-        const { data, error } = await supabase
+        // 1. Загружаем все смены за месяц
+        const { data: shifts, error: shiftsError } = await supabase
             .from('shifts')
-            .select(`
-                *,
-                profiles:user_id (
-                    full_name,
-                    username
-                )
-            `)
+            .select('*')
             .gte('date', startOfMonth.toISOString().split('T')[0])
             .lte('date', endOfMonth.toISOString().split('T')[0])
             .order('date', { ascending: true })
             .order('start_time', { ascending: true });
 
-        if (error) {
-            console.error('Ошибка загрузки всех смен:', error);
+        if (shiftsError) {
+            console.error('Ошибка загрузки смен:', shiftsError);
             return;
         }
 
-        console.log("Полученные данные:", JSON.stringify(data, null, 2));
-        displayAllShifts(data || []);
+        if (!shifts || shifts.length === 0) {
+            console.log("Смены не найдены");
+            displayAllShifts([]);
+            return;
+        }
+
+        // 2. Получаем уникальные user_id из смен
+        const userIds = [...new Set(shifts.map(shift => shift.user_id))];
+
+        // 3. Загружаем профили для этих user_id
+        const { data: profiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, full_name, username')
+            .in('id', userIds);
+
+        if (profilesError) {
+            console.error('Ошибка загрузки профилей:', profilesError);
+            return;
+        }
+
+        // 4. Объединяем смены с профилями
+        const shiftsWithProfiles = shifts.map(shift => {
+            const profile = profiles.find(p => p.id === shift.user_id);
+            return {
+                ...shift,
+                profiles: profile || { full_name: 'Сотрудник', username: 'unknown' }
+            };
+        });
+
+        console.log("Полученные смены с профилями:", shiftsWithProfiles);
+        displayAllShifts(shiftsWithProfiles);
     } catch (error) {
         console.error('Ошибка:', error);
     }
