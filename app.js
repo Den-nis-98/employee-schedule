@@ -520,15 +520,14 @@ async function deleteShiftHandler() {
     }
 }
 
-// --- Общий график ---
 async function loadAllShifts() {
     const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
     try {
-        console.log("Загружаем все смены за период:", startOfMonth, endOfMonth);
+        console.log("Загружаем смены за период:", startOfMonth, endOfMonth);
 
-        // 1. Загружаем все смены за месяц
+        // 1. Загружаем смены за месяц
         const { data: shifts, error: shiftsError } = await supabase
             .from('shifts')
             .select('*')
@@ -537,114 +536,91 @@ async function loadAllShifts() {
             .order('date', { ascending: true })
             .order('start_time', { ascending: true });
 
-        if (shiftsError) {
-            console.error('Ошибка загрузки смен:', shiftsError);
-            return;
-        }
-
-        if (!shifts || shifts.length === 0) {
+        if (shiftsError) throw new Error(`Ошибка загрузки смен: ${shiftsError.message}`);
+        if (!shifts?.length) {
             console.log("Смены не найдены");
             displayAllShifts([]);
             return;
         }
 
-        // 2. Получаем уникальные user_id из смен
+        // 2. Получаем уникальные user_id
         const userIds = [...new Set(shifts.map(shift => shift.user_id))];
 
-        // 3. Загружаем профили для этих user_id
+        // 3. Загружаем профили сотрудников
         const { data: profiles, error: profilesError } = await supabase
             .from('profiles')
             .select('id, full_name, username')
             .in('id', userIds);
 
-        if (profilesError) {
-            console.error('Ошибка загрузки профилей:', profilesError);
-            return;
-        }
+        if (profilesError) throw new Error(`Ошибка загрузки профилей: ${profilesError.message}`);
 
         // 4. Объединяем смены с профилями
         const shiftsWithProfiles = shifts.map(shift => {
-            const profile = profiles.find(p => p.id === shift.user_id);
-            return {
-                ...shift,
-                profiles: profile || { full_name: 'Сотрудник', username: 'unknown' }
-            };
+            const profile = profiles.find(p => p.id === shift.user_id) || { full_name: 'Сотрудник', username: 'unknown' };
+            return { ...shift, profile };
         });
 
-        console.log("Полученные смены с профилями:", shiftsWithProfiles);
         displayAllShifts(shiftsWithProfiles);
     } catch (error) {
         console.error('Ошибка:', error);
     }
 }
 
-// Отображение всех смен
+// Отображение смен по датам
 function displayAllShifts(shifts) {
-    const allShiftsContainer = document.getElementById('all-shifts');
-    if (!allShiftsContainer) {
-        console.error("Элемент all-shifts не найден!");
-        return;
-    }
-    allShiftsContainer.innerHTML = '';
-    if (!shifts || shifts.length === 0) {
-        allShiftsContainer.innerHTML = '<p>Смены не найдены</p>';
+    const container = document.getElementById('all-shifts');
+    if (!container) {
+        console.error("Контейнер для смен не найден!");
         return;
     }
 
+    container.innerHTML = shifts?.length ? '' : '<p>Смены не найдены</p>';
+
     // Группируем смены по датам
     const shiftsByDate = shifts.reduce((acc, shift) => {
-        if (!acc[shift.date]) {
-            acc[shift.date] = [];
-        }
+        if (!acc[shift.date]) acc[shift.date] = [];
         acc[shift.date].push(shift);
         return acc;
     }, {});
 
-    // Отображаем смены по датам
+    // Отображаем смены
     for (const [date, dateShifts] of Object.entries(shiftsByDate)) {
-        const dateElement = document.createElement('div');
-        dateElement.className = 'date-item';
+        const dateBlock = document.createElement('div');
+        dateBlock.className = 'shift-date-block';
 
-        // Заголовок с датой
+        // Заголовок даты
         const dateHeader = document.createElement('div');
-        dateHeader.className = 'date-header';
-        dateHeader.innerHTML = `<strong>${date}</strong>`;
-        dateElement.appendChild(dateHeader);
+        dateHeader.className = 'shift-date-header';
+        dateHeader.textContent = date;
+        dateBlock.appendChild(dateHeader);
 
-        // Список смен для этой даты
+        // Список смен
         dateShifts.forEach(shift => {
-            try {
-                const shiftElement = document.createElement('div');
-                shiftElement.className = 'shift-item';
+            const shiftItem = document.createElement('div');
+            shiftItem.className = 'shift-item';
 
-                // Форматируем время
-                let startTime = shift.start_time;
-                let endTime = shift.end_time;
-                if (!startTime.includes(':')) startTime = `${startTime}:00:00`;
-                if (!endTime.includes(':')) endTime = `${endTime}:00:00`;
-                startTime = startTime.split(':').slice(0, 2).join(':');
-                endTime = endTime.split(':').slice(0, 2).join(':');
+            // Форматируем время
+            let startTime = shift.start_time.includes(':')
+                ? shift.start_time.split(':').slice(0, 2).join(':')
+                : `${shift.start_time}:00`;
 
-                const fullName = shift.profiles?.full_name || 'Сотрудник';
-                const username = shift.profiles?.username || 'unknown';
+            let endTime = shift.end_time.includes(':')
+                ? shift.end_time.split(':').slice(0, 2).join(':')
+                : `${shift.end_time}:00`;
 
-                shiftElement.innerHTML = `
-                    <div class="shift-user">
-                        <small>${fullName} (@${username})</small>
-                    </div>
-                    <div class="shift-time">
-                        <small>${startTime} - ${endTime}</small>
-                    </div>
-                `;
-                dateElement.appendChild(shiftElement);
-            } catch (error) {
-                console.error("Ошибка при отображении смены:", shift, error);
-            }
+            // Отображаем сотрудника и время
+            shiftItem.innerHTML = `
+                <span class="shift-employee">${shift.profile.full_name} (@${shift.profile.username})</span>
+                <span class="shift-time">${startTime} - ${endTime}</span>
+            `;
+
+            dateBlock.appendChild(shiftItem);
         });
 
-        allShiftsContainer.appendChild(dateElement);
+        container.appendChild(dateBlock);
     }
 }
+
 
 // --- Инициализация ---
 function initEventListeners() {
