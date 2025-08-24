@@ -11,14 +11,17 @@ let currentDate = new Date();
 let currentEvents = [];
 
 // --- Вспомогательные функции ---
+// Проверка валидности никнейма
 function isValidUsername(username) {
     return /^[a-zA-Z0-9_]{3,20}$/.test(username);
 }
 
+// Проверка валидности ФИО
 function isValidFullname(fullname) {
     return fullname.trim().length >= 3;
 }
 
+// Отображение сообщений
 function showMessage(text, type = 'error') {
     const messageDiv = document.getElementById('auth-message');
     if (!messageDiv) return;
@@ -32,6 +35,7 @@ function showMessage(text, type = 'error') {
     }, 3000);
 }
 
+
 // --- Авторизация ---
 function showLogin() {
     const loginForm = document.getElementById('login-form');
@@ -42,6 +46,7 @@ function showLogin() {
     }
 }
 
+// Регистрация нового пользователя
 function showRegister() {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
@@ -109,6 +114,7 @@ async function register() {
     }
 }
 
+// Автоматический вход после регистрации
 async function loginAfterRegister(username, password) {
     const email = `${username}@company.com`;
 
@@ -129,6 +135,7 @@ async function loginAfterRegister(username, password) {
     }
 }
 
+// Вход пользователя
 async function login() {
     const username = document.getElementById('login-username')?.value.trim();
     const password = document.getElementById('login-password')?.value;
@@ -159,12 +166,14 @@ async function login() {
     }
 }
 
+// Выход пользователя
 async function logout() {
     await supabase.auth.signOut();
     currentUser = null;
     showAuth();
 }
 
+// Проверка авторизации
 async function checkAuth() {
     const { data: { session }, error } = await supabase.auth.getSession();
 
@@ -237,6 +246,55 @@ async function loadUserData() {
 }
 
 // --- Календарь ---
+function createDayElement(dayNumber, additionalClass = '', dateStr = '', today = null, year = null, month = null, i = null) {
+    const dayElement = document.createElement('div');
+    dayElement.className = `day ${additionalClass}`;
+
+    const dayNumberElement = document.createElement('div');
+    dayNumberElement.className = 'day-number';
+    dayNumberElement.textContent = dayNumber;
+
+    const timeContainer = document.createElement('div');
+    timeContainer.className = 'shift-time-container';
+
+    dayElement.appendChild(dayNumberElement);
+    dayElement.appendChild(timeContainer);
+
+    if (dateStr) {
+        dayElement.dataset.date = dateStr;
+
+        if (today && year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) {
+            dayElement.classList.add('today');
+        }
+
+        const userShift = currentEvents.find(event =>
+            event.date === dateStr && event.user_id === currentUser?.id
+        );
+
+        if (userShift) {
+            dayElement.classList.add('has-shift');
+            const startTime = userShift.start_time.substring(0, 5);
+            const endTime = userShift.end_time.substring(0, 5);
+
+            const startElement = document.createElement('div');
+            startElement.className = 'shift-time-start';
+            startElement.textContent = startTime;
+
+            const endElement = document.createElement('div');
+            endElement.className = 'shift-time-end';
+            endElement.textContent = endTime;
+
+            timeContainer.appendChild(startElement);
+            timeContainer.appendChild(endElement);
+        }
+
+        dayElement.addEventListener('click', () => showModal(dateStr));
+    }
+
+    return dayElement;
+}
+
+
 function renderCalendar() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -283,54 +341,6 @@ function renderCalendar() {
     }
 }
 
-function createDayElement(dayNumber, additionalClass = '', dateStr = '', today = null, year = null, month = null, i = null) {
-    const dayElement = document.createElement('div');
-    dayElement.className = `day ${additionalClass}`;
-
-    const dayNumberElement = document.createElement('div');
-    dayNumberElement.className = 'day-number';
-    dayNumberElement.textContent = dayNumber;
-
-    const timeContainer = document.createElement('div');
-    timeContainer.className = 'shift-time-container';
-
-    dayElement.appendChild(dayNumberElement);
-    dayElement.appendChild(timeContainer);
-
-    if (dateStr) {
-        dayElement.dataset.date = dateStr;
-
-        if (today && year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) {
-            dayElement.classList.add('today');
-        }
-
-        const userShift = currentEvents.find(event =>
-            event.date === dateStr && event.user_id === currentUser?.id
-        );
-
-        if (userShift) {
-            dayElement.classList.add('has-shift');
-
-            const startTime = userShift.start_time.substring(0, 5);
-            const endTime = userShift.end_time.substring(0, 5);
-
-            const startElement = document.createElement('div');
-            startElement.className = 'shift-time-start';
-            startElement.textContent = startTime;
-
-            const endElement = document.createElement('div');
-            endElement.className = 'shift-time-end';
-            endElement.textContent = endTime;
-
-            timeContainer.appendChild(startElement);
-            timeContainer.appendChild(endElement);
-        }
-
-        dayElement.addEventListener('click', () => showModal(dateStr));
-    }
-
-    return dayElement;
-}
 
 // --- Загрузка смен ---
 async function loadShifts() {
@@ -360,6 +370,7 @@ async function loadShifts() {
     }
 }
 
+// Обновление статистики
 function updateStats() {
     if (!currentUser) return;
 
@@ -410,6 +421,7 @@ function showModal(date) {
     }
 }
 
+// Скрытие модального окна
 function hideModal() {
     const shiftModalElement = document.getElementById('shift-modal');
     if (shiftModalElement) {
@@ -417,6 +429,7 @@ function hideModal() {
     }
 }
 
+// Сохранение смены
 async function saveShiftHandler() {
     if (!currentUser) return;
 
@@ -477,6 +490,7 @@ async function saveShiftHandler() {
     }
 }
 
+// Удаление смены
 async function deleteShiftHandler() {
     if (!currentUser) return;
 
@@ -564,6 +578,7 @@ async function loadAllShifts() {
     }
 }
 
+// Отображение всех смен
 function displayAllShifts(shifts) {
     console.log("Отображаем смены:", shifts);
 
@@ -626,6 +641,7 @@ function displayAllShifts(shifts) {
 
 // --- Инициализация ---
 function initEventListeners() {
+     // Переключение месяцев
     document.getElementById('prev-month')?.addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() - 1);
         renderCalendar();
@@ -638,25 +654,32 @@ function initEventListeners() {
         loadShifts();
     });
 
+    // Модальное окно
     document.querySelector('.close')?.addEventListener('click', hideModal);
     document.getElementById('cancel-shift')?.addEventListener('click', hideModal);
     document.getElementById('save-shift')?.addEventListener('click', saveShiftHandler);
     document.getElementById('delete-shift')?.addEventListener('click', deleteShiftHandler);
 
-    document.getElementById('personal-view')?.addEventListener('click', () => {
+    // Переключение между режимами
+       document.getElementById('personal-view')?.addEventListener('click', () => {
         document.getElementById('personal-view')?.classList.add('active');
         document.getElementById('general-view')?.classList.remove('active');
         document.getElementById('general-schedule')?.classList.add('hidden');
+        document.querySelector('.calendar-container')?.classList.remove('hidden');
+        document.querySelector('.header h1').textContent = '📅 Мой график работы';
         loadShifts();
     });
 
-    document.getElementById('general-view')?.addEventListener('click', () => {
+   document.getElementById('general-view')?.addEventListener('click', () => {
         document.getElementById('general-view')?.classList.add('active');
         document.getElementById('personal-view')?.classList.remove('active');
         document.getElementById('general-schedule')?.classList.remove('hidden');
+        document.querySelector('.calendar-container')?.classList.add('hidden');
+        document.querySelector('.header h1').textContent = '👥 Общий график сотрудников';
         loadAllShifts();
     });
 
+    // Авторизация
     document.getElementById('login-button')?.addEventListener('click', login);
     document.getElementById('register-button')?.addEventListener('click', register);
     document.getElementById('show-register')?.addEventListener('click', showRegister);
