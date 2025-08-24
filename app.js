@@ -513,6 +513,7 @@ async function loadAllShifts() {
 
     try {
         console.log("Загружаем все смены за период:", startOfMonth, endOfMonth);
+
         const { data, error } = await supabase
             .from('shifts')
             .select(`
@@ -532,7 +533,7 @@ async function loadAllShifts() {
             return;
         }
 
-        console.log("Получены смены:", data);
+        console.log("Полученные данные:", JSON.stringify(data, null, 2));
         displayAllShifts(data || []);
     } catch (error) {
         console.error('Ошибка:', error);
