@@ -521,50 +521,6 @@ async function deleteShiftHandler() {
 }
 
 async function loadAllShifts() {
-    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-
-    try {
-        console.log("Загружаем смены за период:", startOfMonth, endOfMonth);
-
-        // 1. Загружаем смены за месяц
-        const { data: shifts, error: shiftsError } = await supabase
-            .from('shifts')
-            .select('*')
-            .gte('date', startOfMonth.toISOString().split('T')[0])
-            .lte('date', endOfMonth.toISOString().split('T')[0])
-            .order('date', { ascending: true })
-            .order('start_time', { ascending: true });
-
-        if (shiftsError) throw new Error(`Ошибка загрузки смен: ${shiftsError.message}`);
-        if (!shifts?.length) {
-            console.log("Смены не найдены");
-            displayAllShifts([]);
-            return;
-        }
-
-        // 2. Получаем уникальные user_id
-        const userIds = [...new Set(shifts.map(shift => shift.user_id))];
-
-        // 3. Загружаем профили сотрудников
-        const { data: profiles, error: profilesError } = await supabase
-            .from('profiles')
-            .select('id, full_name, username')
-            .in('id', userIds);
-
-        if (profilesError) throw new Error(`Ошибка загрузки профилей: ${profilesError.message}`);
-
-        // 4. Объединяем смены с профилями
-        const shiftsWithProfiles = shifts.map(shift => {
-            const profile = profiles.find(p => p.id === shift.user_id) || { full_name: 'Сотрудник', username: 'unknown' };
-            return { ...shift, profile };
-        });
-
-        displayAllShifts(shiftsWithProfiles);
-    } catch (error) {
-        console.error('Ошибка:', error);
-    }
-}
 
 // Отображение смен по датам
 function displayAllShifts(shifts) {
