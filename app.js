@@ -580,64 +580,71 @@ async function loadAllShifts() {
 
 // Отображение всех смен
 function displayAllShifts(shifts) {
-    console.log("Отображаем смены:", shifts);
-
     const allShiftsContainer = document.getElementById('all-shifts');
     if (!allShiftsContainer) {
         console.error("Элемент all-shifts не найден!");
         return;
     }
-
     allShiftsContainer.innerHTML = '';
-
     if (!shifts || shifts.length === 0) {
         allShiftsContainer.innerHTML = '<p>Смены не найдены</p>';
         return;
     }
 
-    shifts.forEach(shift => {
-        try {
-            const shiftElement = document.createElement('div');
-            shiftElement.className = 'shift-item';
-
-            // Приводим время к формату HH:MM:SS, если оно в другом формате
-            let startTime = shift.start_time;
-            let endTime = shift.end_time;
-
-            if (!startTime.includes(':')) startTime = `${startTime}:00:00`;
-            if (!endTime.includes(':')) endTime = `${endTime}:00:00`;
-
-            // Убираем секунды, если они есть (например, "08:00:00" → "08:00")
-            startTime = startTime.split(':').slice(0, 2).join(':');
-            endTime = endTime.split(':').slice(0, 2).join(':');
-
-            const start = new Date(`2000-01-01T${startTime}:00`);
-            const end = new Date(`2000-01-01T${endTime}:00`);
-            const duration = (end - start) / (1000 * 60 * 60);
-
-            const fullName = shift.profiles?.full_name || 'Сотрудник';
-            const username = shift.profiles?.username || 'unknown';
-
-            shiftElement.innerHTML = `
-                <div class="shift-header">
-                    <strong>${fullName}</strong>
-                    <small class="username">(@${username})</small>
-                </div>
-                <div class="shift-time">
-                    <small>${shift.date} | ${startTime} - ${endTime}</small>
-                </div>
-                <div class="shift-duration">
-                    <small>Длительность: ${duration.toFixed(1)} часов</small>
-                </div>
-            `;
-
-            allShiftsContainer.appendChild(shiftElement);
-        } catch (error) {
-            console.error("Ошибка при отображении смены:", shift, error);
+    // Группируем смены по датам
+    const shiftsByDate = shifts.reduce((acc, shift) => {
+        if (!acc[shift.date]) {
+            acc[shift.date] = [];
         }
-    });
-}
+        acc[shift.date].push(shift);
+        return acc;
+    }, {});
 
+    // Отображаем смены по датам
+    for (const [date, dateShifts] of Object.entries(shiftsByDate)) {
+        const dateElement = document.createElement('div');
+        dateElement.className = 'date-item';
+
+        // Заголовок с датой
+        const dateHeader = document.createElement('div');
+        dateHeader.className = 'date-header';
+        dateHeader.innerHTML = `<strong>${date}</strong>`;
+        dateElement.appendChild(dateHeader);
+
+        // Список смен для этой даты
+        dateShifts.forEach(shift => {
+            try {
+                const shiftElement = document.createElement('div');
+                shiftElement.className = 'shift-item';
+
+                // Форматируем время
+                let startTime = shift.start_time;
+                let endTime = shift.end_time;
+                if (!startTime.includes(':')) startTime = `${startTime}:00:00`;
+                if (!endTime.includes(':')) endTime = `${endTime}:00:00`;
+                startTime = startTime.split(':').slice(0, 2).join(':');
+                endTime = endTime.split(':').slice(0, 2).join(':');
+
+                const fullName = shift.profiles?.full_name || 'Сотрудник';
+                const username = shift.profiles?.username || 'unknown';
+
+                shiftElement.innerHTML = `
+                    <div class="shift-user">
+                        <small>${fullName} (@${username})</small>
+                    </div>
+                    <div class="shift-time">
+                        <small>${startTime} - ${endTime}</small>
+                    </div>
+                `;
+                dateElement.appendChild(shiftElement);
+            } catch (error) {
+                console.error("Ошибка при отображении смены:", shift, error);
+            }
+        });
+
+        allShiftsContainer.appendChild(dateElement);
+    }
+}
 
 // --- Инициализация ---
 function initEventListeners() {
