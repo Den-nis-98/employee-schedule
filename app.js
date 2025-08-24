@@ -566,7 +566,7 @@ function displayAllShifts(shifts) {
 
             // Отображаем сотрудника и время
             shiftItem.innerHTML = `
-                <span class="shift-employee">${shift.profile.full_name} (@${shift.profile.username})</span>
+                <span class="shift-employee">${shift.profile.full_name} </span>
                 <span class="shift-time">${startTime} - ${endTime}</span>
             `;
 
