@@ -6,9 +6,8 @@
     <title>График работы</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Экран авторизации -->
@@ -94,14 +93,7 @@
             </div>
         </div>
 
-
-                <!-- Контейнер для общего графика -->
-        <div id="general-schedule" class="hidden">
-            <div id="all-shifts" class="shifts-list"></div>
-        </div>
-    </div>
-    
-            <!-- Статистика -->
+        <!-- Статистика -->
         <div class="stats">
             <div class="stat-item">
                 <span>Смен в месяце:</span>
@@ -109,10 +101,15 @@
             </div>
         </div>
 
+        <!-- Контейнер для общего графика -->
+        <div id="general-schedule" class="hidden">
+            <h3>👥 Общий график сотрудников</h3>
+            <div id="all-shifts" class="shifts-list"></div>
+        </div>
+    </div>
 
     <!-- Подключаем Supabase -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="app.js"></script>
 </body>
 </html>
-
