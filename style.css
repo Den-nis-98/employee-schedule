@@ -6,13 +6,13 @@
     margin-bottom: 20px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     width: 100%;
-    overflow: visible; /* Изменено с hidden на visible */
+    overflow: visible;
 }
 
 .calendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 6px; /* Увеличено расстояние между ячейками */
+    gap: 8px; /* Увеличиваем расстояние между ячейками */
     width: 100%;
 }
 
@@ -23,37 +23,39 @@
     align-items: center;
     justify-content: flex-start;
     border: 1.5px solid #e9ecef;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s;
     font-weight: 500;
-    min-height: 40px; /* Увеличена минимальная высота */
-    padding: 4px 2px;
+    min-height: 60px; /* Увеличиваем минимальную высоту */
+    padding: 6px 4px;
     position: relative;
     text-align: center;
-    overflow: visible; /* Изменено с hidden на visible */
+    overflow: visible;
 }
 
 .day-number {
     font-size: 14px;
     font-weight: 600;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
     line-height: 1.2;
     flex-shrink: 0;
 }
 
 .shift-info {
-    font-size: 10px;
-    color: #666;
+    font-size: 11px;
+    color: #155724;
     line-height: 1.1;
     display: none;
     width: 100%;
-    padding: 0 1px;
+    padding: 0 2px;
     flex-shrink: 0;
-    white-space: normal; /* Разрешен перенос текста */
-    overflow: visible; /* Разрешено отображение за пределами */
-    text-overflow: clip; /* Убрано обрезание текста */
-    word-break: break-word; /* Перенос длинных слов */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: rgba(212, 237, 218, 0.3);
+    border-radius: 4px;
+    margin-top: 2px;
 }
 
 .day.has-shift .shift-info {
@@ -63,12 +65,12 @@
 /* Увеличим размер ячеек для мобильных устройств */
 @media (max-width: 768px) {
     .calendar {
-        gap: 4px;
+        gap: 6px;
     }
     
     .day {
-        min-height: 36px;
-        padding: 3px 1px;
+        min-height: 50px;
+        padding: 4px 2px;
     }
     
     .day-number {
@@ -76,14 +78,13 @@
     }
     
     .shift-info {
-        font-size: 9px;
-        line-height: 1;
+        font-size: 10px;
     }
 }
 
 @media (max-width: 480px) {
     .day {
-        min-height: 32px;
+        min-height: 45px;
     }
     
     .day-number {
@@ -91,7 +92,13 @@
     }
     
     .shift-info {
-        font-size: 8px;
+        font-size: 9px;
+        white-space: normal;
+        line-height: 1;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 }
 
