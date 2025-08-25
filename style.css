@@ -151,7 +151,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
+    gap: 62px;
     margin-top: 16px;
 }
 
@@ -241,19 +241,19 @@ body {
 .weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
+    gap: 8px;
     margin-bottom: 8px;
     text-align: center;
     font-weight: 600;
     color: #555;
     font-size: 12px;
-    padding: 0 2px;
+    padding: 3.5px;
 }
 
 .calendar {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
+    gap: 0px;
     width: 100%;
 }
 
@@ -663,7 +663,7 @@ body {
     }
 
     .weekdays {
-        font-size: 9px;
+        font-size: 13px;
     }
 
     .month-nav span {
@@ -713,7 +713,7 @@ body {
     }
 
     .day-number {
-        font-size: 9px;
+        font-size: 11px;
     }
 
     .day.has-shift .shift-info {
