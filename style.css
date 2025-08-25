@@ -180,7 +180,7 @@ body {
 }
 
 .btn-secondary {
-    background: #6c757d;
+    background: #5744b5;
     color: white;
     border: none;
     padding: 10px 18px;
@@ -550,7 +550,7 @@ body {
     }
 
     .user-info {
-        flex-direction: column;
+        flex-direction: row;
         text-align: center;
         gap: 8px;
     }
