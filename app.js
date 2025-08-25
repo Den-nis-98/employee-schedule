@@ -571,17 +571,22 @@ function displayAllShifts(shifts) {
         const dateBlock = document.createElement('div');
         dateBlock.className = 'shift-date-block';
 
-        // Заголовок даты
-        const dateHeader = document.createElement('div');
-        dateHeader.className = 'shift-date-header';
+        
+       // Заголовок даты
+       const dateHeader = document.createElement('div');
+       dateHeader.className = 'shift-date-header';
 
-        // Используем встроенные возможности JavaScript для форматирования
-        dateHeader.textContent = new Date(date + 'T00:00:00').toLocaleDateString('ru-RU', {
-               day: 'numeric',
-               month: 'long',
-               year: 'numeric'
-});
+        // Форматируем дату в формате "15 января 2024 года"
+        const formatDate = (dateString) => {
+        const [year, month, day] = dateString.split('-');
+        const monthNames = [
+        'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+        'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ];
+        return `${parseInt(day)} ${monthNames[parseInt(month) - 1]} ${year} года`;
+};
 
+dateHeader.textContent = formatDate(date);
 dateBlock.appendChild(dateHeader);
 
         // Список смен
@@ -600,7 +605,7 @@ dateBlock.appendChild(dateHeader);
 
             // Отображаем сотрудника и время
             shiftItem.innerHTML = `
-                <span class="shift-employee">${shift.profile.full_name} (@${shift.profile.username})</span>
+                <span class="shift-employee">${shift.profile.full_name}</span>
                 <span class="shift-time">${startTime} - ${endTime}</span>
             `;
 
