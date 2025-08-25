@@ -574,8 +574,15 @@ function displayAllShifts(shifts) {
         // Заголовок даты
         const dateHeader = document.createElement('div');
         dateHeader.className = 'shift-date-header';
-        dateHeader.textContent = date;
-        dateBlock.appendChild(dateHeader);
+
+        // Используем встроенные возможности JavaScript для форматирования
+        dateHeader.textContent = new Date(date + 'T00:00:00').toLocaleDateString('ru-RU', {
+               day: 'numeric',
+               month: 'long',
+               year: 'numeric'
+});
+
+dateBlock.appendChild(dateHeader);
 
         // Список смен
         dateShifts.forEach(shift => {
