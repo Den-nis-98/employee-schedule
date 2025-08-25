@@ -1,6 +1,6 @@
 // Настройки Supabase
 const SUPABASE_URL = 'https://olzdllwagjkhnmtwcbet.supabase.co';
-const SUPABASE_KEY = 'ваш секретный ключ';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9semRsbHdhZ2praG5tdHdjYmV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5NDc5MTQsImV4cCI6MjA3MTUyMzkxNH0.yRDXL5r72ieKXoh8FY44Xcqq8kSxdiJilo4HGvzBYhw';
 
 // Инициализация клиента Supabase
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
