@@ -10,6 +10,7 @@ let currentUser = null;
 let currentDate = new Date();
 let currentEvents = [];
 
+
 // --- Вспомогательные функции ---
 // Проверка валидности никнейма
 function isValidUsername(username) {
