@@ -238,7 +238,7 @@ async function loadUserData() {
 }
 
 // --- Календарь ---
-function createDayElement(dayNumber, additionalClass = '', dateStr = '', today = null, year = null, month = null, i = null) {
+function createDayElement(dayNumber, additionalClass = '', dateStr = '', isToday = false) {
     const dayElement = document.createElement('div');
     dayElement.className = `day ${additionalClass}`;
 
@@ -252,10 +252,10 @@ function createDayElement(dayNumber, additionalClass = '', dateStr = '', today =
     dayElement.appendChild(dayNumberElement);
     dayElement.appendChild(timeContainer);
 
-    if (dateStr) {
+  if (dateStr) {
         dayElement.dataset.date = dateStr;
 
-        if (today && year === today.getFullYear() && month === today.getMonth() && i === today.getDate()) {
+        if (isToday) {
             dayElement.classList.add('today');
         }
 
@@ -263,7 +263,8 @@ function createDayElement(dayNumber, additionalClass = '', dateStr = '', today =
             event.date === dateStr && event.user_id === currentUser?.id
         );
 
-        if (userShift) {
+
+         if (userShift) {
             dayElement.classList.add('has-shift');
             const startTime = userShift.start_time.substring(0, 5);
             const endTime = userShift.end_time.substring(0, 5);
@@ -298,7 +299,7 @@ function renderCalendar() {
         });
     }
 
-    const firstDay = new Date(year, month, 1);
+   const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
@@ -307,7 +308,7 @@ function renderCalendar() {
     if (!calendarElement) return;
 
     calendarElement.innerHTML = '';
-
+    
     // Дни предыдущего месяца
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = startDay - 1; i >= 0; i--) {
@@ -317,9 +318,12 @@ function renderCalendar() {
 
     // Дни текущего месяца
     const today = new Date();
+    const todayFormatted = formatDate(today);
+    
     for (let i = 1; i <= daysInMonth; i++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
-        const dayElement = createDayElement(i, '', dateStr, today, year, month, i);
+        const dateStr = formatDate(new Date(year, month, i));
+        const isToday = dateStr === todayFormatted;
+        const dayElement = createDayElement(i, '', dateStr, isToday);
         calendarElement.appendChild(dayElement);
     }
 
@@ -332,20 +336,34 @@ function renderCalendar() {
     }
 }
 
+// Вспомогательная функция для форматирования даты в YYYY-MM-DD
+function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+
 // --- Загрузка смен ---
 async function loadShifts() {
     if (!currentUser) return;
 
-    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth() + 1;
+
+    // Форматируем даты вручную для избежания проблем с часовыми поясами
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${new Date(year, month, 0).getDate()}`;
 
     try {
         const { data, error } = await supabase
             .from('shifts')
             .select('*')
             .eq('user_id', currentUser.id)
-            .gte('date', startOfMonth.toISOString().split('T')[0])
-            .lte('date', endOfMonth.toISOString().split('T')[0]);
+            .gte('date', startDate)
+            .lte('date', endDate)
+            .order('date', { ascending: true });
 
         if (error) {
             console.error('Ошибка загрузки смен:', error);
@@ -362,14 +380,37 @@ async function loadShifts() {
 
 // Обновление статистики
 function updateStats() {
-    if (!currentUser) return;
+    const statsElement = document.getElementById('stats');
+    if (!statsElement) return;
 
-    const userShifts = currentEvents.filter(event => event.user_id === currentUser.id);
-    const shiftsCountElement = document.getElementById('shifts-count');
+    const totalShifts = currentEvents.length;
+    const totalHours = currentEvents.reduce((sum, shift) => {
+        const start = new Date(`2000-01-01T${shift.start_time}`);
+        const end = new Date(`2000-01-01T${shift.end_time}`);
+        const hours = (end - start) / (1000 * 60 * 60);
+        return sum + hours;
+    }, 0);
 
-    if (shiftsCountElement) {
-        shiftsCountElement.textContent = userShifts.length;
-    }
+    statsElement.innerHTML = `
+        <div>Всего смен: ${totalShifts}</div>
+        <div>Общее время: ${totalHours.toFixed(1)} часов</div>
+    `;
+}
+// --- Инициализация календаря ---
+let currentDate = new Date();
+let currentEvents = [];
+let currentUser = null; // Должен быть установлен при авторизации
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', () => {
+    // Здесь должна быть инициализация пользователя
+    loadShifts();
+});
+
+// Навигация по месяцам
+function navigateMonth(direction) {
+    currentDate.setMonth(currentDate.getMonth() + direction);
+    loadShifts();
 }
 
 // --- Модальное окно ---
