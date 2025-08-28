@@ -32,6 +32,22 @@ function showMessage(text, type = 'error') {
     }, 3000);
 }
 
+function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function formatDateForDisplay(dateString) {
+    const [year, month, day] = dateString.split('-');
+    const monthNames = [
+        'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+        'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ];
+    return `${parseInt(day)} ${monthNames[parseInt(month) - 1]} ${year} года`;
+}
+
 // --- Авторизация ---
 function showLogin() {
     const loginForm = document.getElementById('login-form');
@@ -331,24 +347,20 @@ function renderCalendar() {
     }
 }
 
-function formatDate(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
 // --- Загрузка смен ---
 async function loadShifts() {
     if (!currentUser) return;
 
     const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
+    const month = currentDate.getMonth() + 1;
 
-    // Исправлено: правильное вычисление последнего дня месяца
-    const lastDay = new Date(year, month + 1, 0).getDate();
-    const startDate = formatDate(new Date(year, month, 1));
-    const endDate = formatDate(new Date(year, month, lastDay));
+    // Правильное вычисление границ месяца
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
+    const startDate = formatDate(firstDay);
+    const endDate = formatDate(lastDay);
+
+    console.log('Загрузка смен за период:', startDate, 'до', endDate);
 
     try {
         const { data, error } = await supabase
@@ -365,6 +377,7 @@ async function loadShifts() {
         }
 
         currentEvents = data || [];
+        console.log('Загружено смен:', currentEvents.length);
         updateStats();
         renderCalendar();
     } catch (error) {
@@ -379,10 +392,15 @@ function updateStats() {
 
     const totalShifts = currentEvents.length;
     const totalHours = currentEvents.reduce((sum, shift) => {
-        const start = new Date(`2000-01-01T${shift.start_time}`);
-        const end = new Date(`2000-01-01T${shift.end_time}`);
-        const hours = (end - start) / (1000 * 60 * 60);
-        return sum + hours;
+        try {
+            const start = new Date(`2000-01-01T${shift.start_time}`);
+            const end = new Date(`2000-01-01T${shift.end_time}`);
+            const hours = (end - start) / (1000 * 60 * 60);
+            return sum + hours;
+        } catch (e) {
+            console.error('Ошибка вычисления времени для смены:', shift, e);
+            return sum;
+        }
     }, 0);
 
     statsElement.innerHTML = `
@@ -528,11 +546,14 @@ async function deleteShiftHandler() {
 
 async function loadAllShifts() {
     const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const lastDay = new Date(year, month + 1, 0).getDate();
-    
-    const startDate = formatDate(new Date(year, month, 1));
-    const endDate = formatDate(new Date(year, month, lastDay));
+    const month = currentDate.getMonth() + 1;
+
+    const firstDay = new Date(year, month - 1, 1);
+    const lastDay = new Date(year, month, 0);
+    const startDate = formatDate(firstDay);
+    const endDate = formatDate(lastDay);
+
+    console.log('Загрузка всех смен за период:', startDate, 'до', endDate);
 
     try {
         const { data: shifts, error: shiftsError } = await supabase
@@ -544,6 +565,8 @@ async function loadAllShifts() {
             .order('start_time', { ascending: true });
 
         if (shiftsError) throw new Error(`Ошибка загрузки смен: ${shiftsError.message}`);
+        
+        console.log('Загружено всех смен:', shifts?.length || 0);
         
         if (!shifts?.length) {
             displayAllShifts([]);
@@ -620,15 +643,6 @@ function displayAllShifts(shifts) {
 
         container.appendChild(dateBlock);
     }
-}
-
-function formatDateForDisplay(dateString) {
-    const [year, month, day] = dateString.split('-');
-    const monthNames = [
-        'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-        'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
-    ];
-    return `${parseInt(day)} ${monthNames[parseInt(month) - 1]} ${year} года`;
 }
 
 // --- Инициализация ---
