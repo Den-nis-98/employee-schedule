@@ -387,6 +387,7 @@ async function loadShifts() {
         // Отладочная информация
         if (currentEvents.length > 0) {
             console.log('Даты смен:', currentEvents.map(s => s.date));
+            console.log('Время смен:', currentEvents.map(s => `${s.start_time} - ${s.end_time}`));
         }
         
         updateStats();
@@ -399,9 +400,22 @@ async function loadShifts() {
 // Обновление статистики
 function updateStats() {
     const statsElement = document.getElementById('stats');
-    if (!statsElement) return;
+    if (!statsElement) {
+        console.error('Элемент stats не найден в DOM');
+        // Создаем элемент, если он не существует
+        const statsContainer = document.querySelector('.stats-container');
+        if (statsContainer) {
+            statsElement = document.createElement('div');
+            statsElement.id = 'stats';
+            statsContainer.appendChild(statsElement);
+            console.log('Создан новый элемент stats');
+        } else {
+            return;
+        }
+    }
 
     const totalShifts = currentEvents.length;
+    
     const totalHours = currentEvents.reduce((sum, shift) => {
         try {
             const startParts = shift.start_time.split(':');
@@ -423,9 +437,11 @@ function updateStats() {
     }, 0);
 
     statsElement.innerHTML = `
-        <div>Всего смен: ${totalShifts}</div>
-        <div>Общее время: ${totalHours.toFixed(1)} часов</div>
+        <div class="stat-item">Смен в месяце: <strong>${totalShifts}</strong></div>
+        <div class="stat-item">Общее время: <strong>${totalHours.toFixed(1)} часов</strong></div>
     `;
+    
+    console.log('Статистика обновлена:', totalShifts, 'смен,', totalHours.toFixed(1), 'часов');
 }
 
 // --- Модальное окно ---
@@ -705,6 +721,16 @@ function initEventListeners() {
 
 // --- Запуск приложения ---
 document.addEventListener('DOMContentLoaded', async function() {
+    // Проверка существования необходимых DOM элементов
+    const requiredElements = ['stats', 'calendar', 'current-month'];
+    requiredElements.forEach(id => {
+        const element = document.getElementById(id);
+        console.log(`Элемент ${id} существует:`, !!element);
+        if (!element) {
+            console.error(`Элемент с id="${id}" не найден в DOM!`);
+        }
+    });
+
     initEventListeners();
 
     // Очистка полей формы
