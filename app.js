@@ -48,6 +48,19 @@ function formatDateForDisplay(dateString) {
     return `${parseInt(day)} ${monthNames[parseInt(month) - 1]} ${year} года`;
 }
 
+function getMonthBoundaries(date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    return {
+        startDate: formatDate(firstDay),
+        endDate: formatDate(lastDay),
+        year: year,
+        month: month
+    };
+}
+
 // --- Авторизация ---
 function showLogin() {
     const loginForm = document.getElementById('login-form');
@@ -351,16 +364,8 @@ function renderCalendar() {
 async function loadShifts() {
     if (!currentUser) return;
 
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth() + 1;
-
-    // Правильное вычисление границ месяца
-    const firstDay = new Date(year, month - 1, 1);
-    const lastDay = new Date(year, month, 0);
-    const startDate = formatDate(firstDay);
-    const endDate = formatDate(lastDay);
-
-    console.log('Загрузка смен за период:', startDate, 'до', endDate);
+    const { startDate, endDate } = getMonthBoundaries(currentDate);
+    console.log('Загрузка смен пользователя за период:', startDate, 'до', endDate);
 
     try {
         const { data, error } = await supabase
@@ -377,7 +382,13 @@ async function loadShifts() {
         }
 
         currentEvents = data || [];
-        console.log('Загружено смен:', currentEvents.length);
+        console.log('Загружено смен пользователя:', currentEvents.length);
+        
+        // Отладочная информация
+        if (currentEvents.length > 0) {
+            console.log('Даты смен:', currentEvents.map(s => s.date));
+        }
+        
         updateStats();
         renderCalendar();
     } catch (error) {
@@ -393,9 +404,17 @@ function updateStats() {
     const totalShifts = currentEvents.length;
     const totalHours = currentEvents.reduce((sum, shift) => {
         try {
-            const start = new Date(`2000-01-01T${shift.start_time}`);
-            const end = new Date(`2000-01-01T${shift.end_time}`);
-            const hours = (end - start) / (1000 * 60 * 60);
+            const startParts = shift.start_time.split(':');
+            const endParts = shift.end_time.split(':');
+            
+            const startHours = parseInt(startParts[0]);
+            const startMinutes = parseInt(startParts[1]);
+            const endHours = parseInt(endParts[0]);
+            const endMinutes = parseInt(endParts[1]);
+            
+            const totalMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
+            const hours = totalMinutes / 60;
+            
             return sum + hours;
         } catch (e) {
             console.error('Ошибка вычисления времени для смены:', shift, e);
@@ -545,14 +564,7 @@ async function deleteShiftHandler() {
 }
 
 async function loadAllShifts() {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth() + 1;
-
-    const firstDay = new Date(year, month - 1, 1);
-    const lastDay = new Date(year, month, 0);
-    const startDate = formatDate(firstDay);
-    const endDate = formatDate(lastDay);
-
+    const { startDate, endDate } = getMonthBoundaries(currentDate);
     console.log('Загрузка всех смен за период:', startDate, 'до', endDate);
 
     try {
