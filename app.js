@@ -397,6 +397,7 @@ async function loadShifts() {
     }
 }
 
+
 // Обновление статистики
 function updateStats() {
     const statsElement = document.getElementById('stats');
@@ -416,33 +417,13 @@ function updateStats() {
 
     const totalShifts = currentEvents.length;
     
-    const totalHours = currentEvents.reduce((sum, shift) => {
-        try {
-            const startParts = shift.start_time.split(':');
-            const endParts = shift.end_time.split(':');
-            
-            const startHours = parseInt(startParts[0]);
-            const startMinutes = parseInt(startParts[1]);
-            const endHours = parseInt(endParts[0]);
-            const endMinutes = parseInt(endParts[1]);
-            
-            const totalMinutes = (endHours * 60 + endMinutes) - (startHours * 60 + startMinutes);
-            const hours = totalMinutes / 60;
-            
-            return sum + hours;
-        } catch (e) {
-            console.error('Ошибка вычисления времени для смены:', shift, e);
-            return sum;
-        }
-    }, 0);
-
     statsElement.innerHTML = `
         <div class="stat-item">Смен в месяце: <strong>${totalShifts}</strong></div>
-        <div class="stat-item">Общее время: <strong>${totalHours.toFixed(1)} часов</strong></div>
     `;
     
-    console.log('Статистика обновлена:', totalShifts, 'смен,', totalHours.toFixed(1), 'часов');
+    console.log('Статистика обновлена:', totalShifts, 'смен');
 }
+
 
 // --- Модальное окно ---
 function showModal(date) {
