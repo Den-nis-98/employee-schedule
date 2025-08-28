@@ -10,19 +10,15 @@ let currentUser = null;
 let currentDate = new Date();
 let currentEvents = [];
 
-
 // --- Вспомогательные функции ---
-// Проверка валидности никнейма
 function isValidUsername(username) {
     return /^[a-zA-Z0-9_]{3,20}$/.test(username);
 }
 
-// Проверка валидности ФИО
 function isValidFullname(fullname) {
     return fullname.trim().length >= 3;
 }
 
-// Отображение сообщений
 function showMessage(text, type = 'error') {
     const messageDiv = document.getElementById('auth-message');
     if (!messageDiv) return;
@@ -252,7 +248,7 @@ function createDayElement(dayNumber, additionalClass = '', dateStr = '', isToday
     dayElement.appendChild(dayNumberElement);
     dayElement.appendChild(timeContainer);
 
-  if (dateStr) {
+    if (dateStr) {
         dayElement.dataset.date = dateStr;
 
         if (isToday) {
@@ -263,8 +259,7 @@ function createDayElement(dayNumber, additionalClass = '', dateStr = '', isToday
             event.date === dateStr && event.user_id === currentUser?.id
         );
 
-
-         if (userShift) {
+        if (userShift) {
             dayElement.classList.add('has-shift');
             const startTime = userShift.start_time.substring(0, 5);
             const endTime = userShift.end_time.substring(0, 5);
@@ -299,7 +294,7 @@ function renderCalendar() {
         });
     }
 
-   const firstDay = new Date(year, month, 1);
+    const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
@@ -336,7 +331,6 @@ function renderCalendar() {
     }
 }
 
-// Вспомогательная функция для форматирования даты в YYYY-MM-DD
 function formatDate(date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -344,17 +338,17 @@ function formatDate(date) {
     return `${year}-${month}-${day}`;
 }
 
-
 // --- Загрузка смен ---
 async function loadShifts() {
     if (!currentUser) return;
 
     const year = currentDate.getFullYear();
-    const month = currentDate.getMonth() + 1;
+    const month = currentDate.getMonth();
 
-    // Форматируем даты вручную для избежания проблем с часовыми поясами
-    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    const endDate = `${year}-${String(month).padStart(2, '0')}-${new Date(year, month, 0).getDate()}`;
+    // Исправлено: правильное вычисление последнего дня месяца
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    const startDate = formatDate(new Date(year, month, 1));
+    const endDate = formatDate(new Date(year, month, lastDay));
 
     try {
         const { data, error } = await supabase
@@ -533,29 +527,31 @@ async function deleteShiftHandler() {
 }
 
 async function loadAllShifts() {
-    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    
+    const startDate = formatDate(new Date(year, month, 1));
+    const endDate = formatDate(new Date(year, month, lastDay));
 
     try {
-        // 1. Загружаем смены за месяц
         const { data: shifts, error: shiftsError } = await supabase
             .from('shifts')
             .select('*')
-            .gte('date', startOfMonth.toISOString().split('T')[0])
-            .lte('date', endOfMonth.toISOString().split('T')[0])
+            .gte('date', startDate)
+            .lte('date', endDate)
             .order('date', { ascending: true })
             .order('start_time', { ascending: true });
 
         if (shiftsError) throw new Error(`Ошибка загрузки смен: ${shiftsError.message}`);
+        
         if (!shifts?.length) {
             displayAllShifts([]);
             return;
         }
 
-        // 2. Получаем уникальные user_id
         const userIds = [...new Set(shifts.map(shift => shift.user_id))];
 
-        // 3. Загружаем профили сотрудников
         const { data: profiles, error: profilesError } = await supabase
             .from('profiles')
             .select('id, full_name, username')
@@ -563,73 +559,57 @@ async function loadAllShifts() {
 
         if (profilesError) throw new Error(`Ошибка загрузки профилей: ${profilesError.message}`);
 
-        // 4. Объединяем смены с профилями
         const shiftsWithProfiles = shifts.map(shift => {
-            const profile = profiles.find(p => p.id === shift.user_id) || { full_name: 'Сотрудник', username: 'unknown' };
+            const profile = profiles.find(p => p.id === shift.user_id) || { 
+                full_name: 'Сотрудник', 
+                username: 'unknown' 
+            };
             return { ...shift, profile };
         });
 
         displayAllShifts(shiftsWithProfiles);
     } catch (error) {
         console.error('Ошибка:', error);
+        const container = document.getElementById('all-shifts');
+        if (container) {
+            container.innerHTML = '<p>Ошибка загрузки смен</p>';
+        }
     }
 }
 
-// Отображение смен по датам
 function displayAllShifts(shifts) {
     const container = document.getElementById('all-shifts');
-    if (!container) {
-        console.error("Контейнер для смен не найден!");
-        return;
-    }
+    if (!container) return;
 
     container.innerHTML = shifts?.length ? '' : '<p>Смены не найдены</p>';
 
-    // Группируем смены по датам
     const shiftsByDate = shifts.reduce((acc, shift) => {
         if (!acc[shift.date]) acc[shift.date] = [];
         acc[shift.date].push(shift);
         return acc;
     }, {});
 
-    // Отображаем смены
     for (const [date, dateShifts] of Object.entries(shiftsByDate)) {
         const dateBlock = document.createElement('div');
         dateBlock.className = 'shift-date-block';
 
-        
-       // Заголовок даты
-       const dateHeader = document.createElement('div');
-       dateHeader.className = 'shift-date-header';
+        const dateHeader = document.createElement('div');
+        dateHeader.className = 'shift-date-header';
+        dateHeader.textContent = formatDateForDisplay(date);
+        dateBlock.appendChild(dateHeader);
 
-        // Форматируем дату в формате "15 января 2024 года"
-        const formatDate = (dateString) => {
-        const [year, month, day] = dateString.split('-');
-        const monthNames = [
-        'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-        'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
-    ];
-        return `${parseInt(day)} ${monthNames[parseInt(month) - 1]} ${year} года`;
-};
-
-dateHeader.textContent = formatDate(date);
-dateBlock.appendChild(dateHeader);
-
-        // Список смен
         dateShifts.forEach(shift => {
             const shiftItem = document.createElement('div');
             shiftItem.className = 'shift-item';
 
-            // Форматируем время
-            let startTime = shift.start_time.includes(':')
-                ? shift.start_time.split(':').slice(0, 2).join(':')
+            const startTime = shift.start_time.includes(':') 
+                ? shift.start_time.substring(0, 5) 
                 : `${shift.start_time}:00`;
-
-            let endTime = shift.end_time.includes(':')
-                ? shift.end_time.split(':').slice(0, 2).join(':')
+                
+            const endTime = shift.end_time.includes(':') 
+                ? shift.end_time.substring(0, 5) 
                 : `${shift.end_time}:00`;
 
-            // Отображаем сотрудника и время
             shiftItem.innerHTML = `
                 <span class="shift-employee">${shift.profile.full_name}</span>
                 <span class="shift-time">${startTime} - ${endTime}</span>
@@ -642,18 +622,25 @@ dateBlock.appendChild(dateHeader);
     }
 }
 
+function formatDateForDisplay(dateString) {
+    const [year, month, day] = dateString.split('-');
+    const monthNames = [
+        'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+        'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ];
+    return `${parseInt(day)} ${monthNames[parseInt(month) - 1]} ${year} года`;
+}
+
 // --- Инициализация ---
 function initEventListeners() {
     // Переключение месяцев
     document.getElementById('prev-month')?.addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() - 1);
-        renderCalendar();
         loadShifts();
     });
 
     document.getElementById('next-month')?.addEventListener('click', () => {
         currentDate.setMonth(currentDate.getMonth() + 1);
-        renderCalendar();
         loadShifts();
     });
 
@@ -695,12 +682,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     initEventListeners();
 
     // Очистка полей формы
-    document.getElementById('login-username')?.setAttribute('value', '');
-    document.getElementById('login-password')?.setAttribute('value', '');
-    document.getElementById('register-username')?.setAttribute('value', '');
-    document.getElementById('register-fullname')?.setAttribute('value', '');
-    document.getElementById('register-password')?.setAttribute('value', '');
-    document.getElementById('register-confirm')?.setAttribute('value', '');
+    ['login-username', 'login-password', 'register-username', 
+     'register-fullname', 'register-password', 'register-confirm'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.value = '';
+    });
 
     // Проверка авторизации
     await checkAuth();
