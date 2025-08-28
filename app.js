@@ -396,22 +396,6 @@ function updateStats() {
         <div>Общее время: ${totalHours.toFixed(1)} часов</div>
     `;
 }
-// --- Инициализация календаря ---
-let currentDate = new Date();
-let currentEvents = [];
-let currentUser = null; // Должен быть установлен при авторизации
-
-// Инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-    // Здесь должна быть инициализация пользователя
-    loadShifts();
-});
-
-// Навигация по месяцам
-function navigateMonth(direction) {
-    currentDate.setMonth(currentDate.getMonth() + direction);
-    loadShifts();
-}
 
 // --- Модальное окно ---
 function showModal(date) {
