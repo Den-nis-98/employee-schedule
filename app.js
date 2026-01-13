@@ -1,9 +1,11 @@
 // Настройки Supabase
 const SUPABASE_URL = 'https://olzdllwagjkhnmtwcbet.supabase.co';
-const SUPABASE_KEY =  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9semRsbHdhZ2praG5tdHdjYmV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5NDc5MTQsImV4cCI6MjA3MTUyMzkxNH0.yRDXL5r72ieKXoh8FY44Xcqq8kSxdiJilo4HGvzBYhw';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9semRsbHdhZ2praG5tdHdjYmV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5NDc5MTQsImV4cCI6MjA3MTUyMzkxNH0.yRDXL5r72ieKXoh8FY44Xcqq8kSxdiJilo4HGvzBYhw';
 
-// Инициализация клиента Supabase
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Инициализация клиента Supabase - ПРАВИЛЬНЫЙ СПОСОБ
+const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+// Или просто:
+// const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Глобальные переменные
 let currentUser = null;
@@ -384,12 +386,6 @@ async function loadShifts() {
         currentEvents = data || [];
         console.log('Загружено смен пользователя:', currentEvents.length);
         
-        // Отладочная информация
-        if (currentEvents.length > 0) {
-            console.log('Даты смен:', currentEvents.map(s => s.date));
-            console.log('Время смен:', currentEvents.map(s => `${s.start_time} - ${s.end_time}`));
-        }
-        
         updateStats();
         renderCalendar();
     } catch (error) {
@@ -397,22 +393,12 @@ async function loadShifts() {
     }
 }
 
-
 // Обновление статистики
 function updateStats() {
     const statsElement = document.getElementById('stats');
     if (!statsElement) {
         console.error('Элемент stats не найден в DOM');
-        // Создаем элемент, если он не существует
-        const statsContainer = document.querySelector('.stats-container');
-        if (statsContainer) {
-            statsElement = document.createElement('div');
-            statsElement.id = 'stats';
-            statsContainer.appendChild(statsElement);
-            console.log('Создан новый элемент stats');
-        } else {
-            return;
-        }
+        return;
     }
 
     const totalShifts = currentEvents.length;
@@ -423,7 +409,6 @@ function updateStats() {
     
     console.log('Статистика обновлена:', totalShifts, 'смен');
 }
-
 
 // --- Модальное окно ---
 function showModal(date) {
@@ -692,25 +677,29 @@ function initEventListeners() {
         loadAllShifts();
     });
 
-    // Авторизация
-    document.getElementById('login-button')?.addEventListener('click', login);
-    document.getElementById('register-button')?.addEventListener('click', register);
-    document.getElementById('show-register')?.addEventListener('click', showRegister);
-    document.getElementById('show-login')?.addEventListener('click', showLogin);
-    document.getElementById('logout-button')?.addEventListener('click', logout);
+    // Авторизация - ПРАВИЛЬНЫЕ ID (согласно вашему HTML)
+    document.getElementById('login-btn')?.addEventListener('click', login);
+    document.getElementById('register-btn')?.addEventListener('click', register);
+    document.getElementById('show-register-link')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showRegister();
+    });
+    document.getElementById('show-login-link')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showLogin();
+    });
+    document.getElementById('logout-btn')?.addEventListener('click', logout);
 }
 
 // --- Запуск приложения ---
 document.addEventListener('DOMContentLoaded', async function() {
-    // Проверка существования необходимых DOM элементов
-    const requiredElements = ['stats', 'calendar', 'current-month'];
-    requiredElements.forEach(id => {
-        const element = document.getElementById(id);
-        console.log(`Элемент ${id} существует:`, !!element);
-        if (!element) {
-            console.error(`Элемент с id="${id}" не найден в DOM!`);
-        }
-    });
+    console.log('DOM загружен, инициализация...');
+
+    // Проверка Supabase
+    if (!supabase) {
+        console.error('Supabase не инициализирован!');
+        return;
+    }
 
     initEventListeners();
 
@@ -723,4 +712,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Проверка авторизации
     await checkAuth();
+    
+    // Делаем функции глобальными для обработки onclick из HTML
+    window.showRegister = showRegister;
+    window.showLogin = showLogin;
+    window.login = login;
+    window.register = register;
+    window.logout = logout;
 });
