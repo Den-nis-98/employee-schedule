@@ -19,8 +19,8 @@
                 <h2>Вход в систему</h2>
                 <input type="text" id="login-username" placeholder="Ваш никнейм" required>
                 <input type="password" id="login-password" placeholder="Пароль" required>
-                <button onclick="login()" class="btn-primary">Войти</button>
-                <p>Нет аккаунта? <a href="#" onclick="showRegister()">Зарегистрироваться</a></p>
+                <button id="login-btn" class="btn-primary">Войти</button>
+                <p>Нет аккаунта? <a href="#" id="show-register-link">Зарегистрироваться</a></p>
             </div>
             <div id="register-form" class="hidden">
                 <h2>Регистрация</h2>
@@ -28,8 +28,8 @@
                 <input type="text" id="register-fullname" placeholder="Фамилия Имя" required>
                 <input type="password" id="register-password" placeholder="Пароль" required>
                 <input type="password" id="register-confirm" placeholder="Повторите пароль" required>
-                <button onclick="register()" class="btn-primary">Зарегистрироваться</button>
-                <p>Уже есть аккаунт? <a href="#" onclick="showLogin()">Войти</a></p>
+                <button id="register-btn" class="btn-primary">Зарегистрироваться</button>
+                <p>Уже есть аккаунт? <a href="#" id="show-login-link">Войти</a></p>
             </div>
             <div id="auth-message" class="hidden"></div>
         </div>
@@ -40,16 +40,16 @@
         <div class="header">
             <div class="user-info">
                 <span id="user-name"></span>
-                <button id="personal-view" class="btn-primary active">Мой график</button>
-                <button id="general-view" class="btn-secondary active">Общий график</button>
-                <button onclick="logout()" class="btn-danger">Выйти</button>
+                <button id="personal-view" class="btn-primary">Мой график</button>
+                <button id="general-view" class="btn-secondary">Общий график</button>
+                <button id="logout-btn" class="btn-danger">Выйти</button>
             </div>
             <h1>📅 Мой график работы</h1>
         </div>
 
         <!-- Календарь для личного графика -->
         <div class="calendar-container">
-             <div class="month-nav">
+            <div class="month-nav">
                 <button id="prev-month" class="btn-icon">←</button>
                 <span id="current-month">Май 2024</span>
                 <button id="next-month" class="btn-icon">→</button>
@@ -65,6 +65,16 @@
                 <div>Вс</div>
             </div>
             <div id="calendar" class="calendar"></div>
+        </div>
+
+        <!-- Контейнер для общего графика -->
+        <div id="general-schedule" class="hidden">
+            <div id="all-shifts" class="shifts-list"></div>
+        </div>
+
+        <!-- Статистика -->
+        <div class="stats-container">
+            <div id="stats"></div>
         </div>
 
         <!-- Модальное окно для добавления смены -->
@@ -94,22 +104,10 @@
                 </div>
             </div>
         </div>
-
-                <!-- Контейнер для общего графика -->
-        <div id="general-schedule" class="hidden">
-            <div id="all-shifts" class="shifts-list"></div>
-        </div>
     </div>
-
-        <!-- Статистика -->
-        <div class="stats-container">
-            <div id="stats">
-            </div>
-        </div>
-
 
     <!-- Подключаем Supabase -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="app.js"></script>
+    <script src="app.js" defer></script>
 </body>
 </html>
