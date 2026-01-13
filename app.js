@@ -2,10 +2,14 @@
 const SUPABASE_URL = 'https://olzdllwagjkhnmtwcbet.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9semRsbHdhZ2praG5tdHdjYmV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5NDc5MTQsImV4cCI6MjA3MTUyMzkxNH0.yRDXL5r72ieKXoh8FY44Xcqq8kSxdiJilo4HGvzBYhw';
 
-// Инициализация клиента Supabase - ПРАВИЛЬНЫЙ СПОСОБ
-const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
-// Или просто:
-// const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Инициализация клиента Supabase
+let supabase;
+try {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('Supabase инициализирован');
+} catch (error) {
+    console.error('Ошибка инициализации Supabase:', error);
+}
 
 // Глобальные переменные
 let currentUser = null;
@@ -23,10 +27,14 @@ function isValidFullname(fullname) {
 
 function showMessage(text, type = 'error') {
     const messageDiv = document.getElementById('auth-message');
-    if (!messageDiv) return;
+    if (!messageDiv) {
+        console.error('Элемент auth-message не найден');
+        return;
+    }
 
     messageDiv.textContent = text;
-    messageDiv.className = `message ${type}`;
+    messageDiv.className = '';
+    messageDiv.classList.add(type);
     messageDiv.classList.remove('hidden');
 
     setTimeout(() => {
@@ -65,6 +73,7 @@ function getMonthBoundaries(date) {
 
 // --- Авторизация ---
 function showLogin() {
+    console.log('showLogin вызван');
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
     if (loginForm && registerForm) {
@@ -74,6 +83,7 @@ function showLogin() {
 }
 
 function showRegister() {
+    console.log('showRegister вызван');
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
     if (loginForm && registerForm) {
@@ -83,6 +93,7 @@ function showRegister() {
 }
 
 async function register() {
+    console.log('register вызван');
     const username = document.getElementById('register-username')?.value.trim();
     const fullname = document.getElementById('register-fullname')?.value.trim();
     const password = document.getElementById('register-password')?.value;
@@ -161,6 +172,7 @@ async function loginAfterRegister(username, password) {
 }
 
 async function login() {
+    console.log('login вызван');
     const username = document.getElementById('login-username')?.value.trim();
     const password = document.getElementById('login-password')?.value;
 
@@ -197,6 +209,12 @@ async function logout() {
 }
 
 async function checkAuth() {
+    if (!supabase) {
+        console.error('Supabase не инициализирован');
+        showAuth();
+        return;
+    }
+
     const { data: { session }, error } = await supabase.auth.getSession();
 
     if (error) {
@@ -217,6 +235,7 @@ async function checkAuth() {
 
 // --- UI функции ---
 function showAuth() {
+    console.log('showAuth вызван');
     const authScreen = document.getElementById('auth-screen');
     const app = document.getElementById('app');
     if (authScreen && app) {
@@ -226,6 +245,7 @@ function showAuth() {
 }
 
 function showApp() {
+    console.log('showApp вызван');
     const authScreen = document.getElementById('auth-screen');
     const app = document.getElementById('app');
     if (authScreen && app) {
@@ -641,82 +661,168 @@ function displayAllShifts(shifts) {
 
 // --- Инициализация ---
 function initEventListeners() {
-    // Переключение месяцев
-    document.getElementById('prev-month')?.addEventListener('click', () => {
-        currentDate.setMonth(currentDate.getMonth() - 1);
-        loadShifts();
-    });
+    console.log('Инициализация обработчиков событий');
+    
+    // Ссылка "Зарегистрироваться"
+    const showRegisterLink = document.getElementById('show-register-link');
+    if (showRegisterLink) {
+        console.log('Найдена ссылка show-register-link');
+        showRegisterLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Клик по ссылке "Зарегистрироваться"');
+            showRegister();
+        });
+    } else {
+        console.error('Ссылка show-register-link не найдена');
+    }
 
-    document.getElementById('next-month')?.addEventListener('click', () => {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        loadShifts();
-    });
+    // Ссылка "Войти"
+    const showLoginLink = document.getElementById('show-login-link');
+    if (showLoginLink) {
+        console.log('Найдена ссылка show-login-link');
+        showLoginLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Клик по ссылке "Войти"');
+            showLogin();
+        });
+    } else {
+        console.error('Ссылка show-login-link не найдена');
+    }
+
+    // Кнопка "Войти"
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) {
+        console.log('Найдена кнопка login-btn');
+        loginBtn.addEventListener('click', login);
+    } else {
+        console.error('Кнопка login-btn не найдена');
+    }
+
+    // Кнопка "Зарегистрироваться"
+    const registerBtn = document.getElementById('register-btn');
+    if (registerBtn) {
+        console.log('Найдена кнопка register-btn');
+        registerBtn.addEventListener('click', register);
+    } else {
+        console.error('Кнопка register-btn не найдена');
+    }
+
+    // Кнопка "Выйти"
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        console.log('Найдена кнопка logout-btn');
+        logoutBtn.addEventListener('click', logout);
+    }
+
+    // Переключение месяцев
+    const prevMonthBtn = document.getElementById('prev-month');
+    if (prevMonthBtn) {
+        prevMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            loadShifts();
+        });
+    }
+
+    const nextMonthBtn = document.getElementById('next-month');
+    if (nextMonthBtn) {
+        nextMonthBtn.addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            loadShifts();
+        });
+    }
 
     // Модальное окно
-    document.querySelector('.close')?.addEventListener('click', hideModal);
-    document.getElementById('cancel-shift')?.addEventListener('click', hideModal);
-    document.getElementById('save-shift')?.addEventListener('click', saveShiftHandler);
-    document.getElementById('delete-shift')?.addEventListener('click', deleteShiftHandler);
+    const closeBtn = document.querySelector('.close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', hideModal);
+    }
+
+    const cancelShiftBtn = document.getElementById('cancel-shift');
+    if (cancelShiftBtn) {
+        cancelShiftBtn.addEventListener('click', hideModal);
+    }
+
+    const saveShiftBtn = document.getElementById('save-shift');
+    if (saveShiftBtn) {
+        saveShiftBtn.addEventListener('click', saveShiftHandler);
+    }
+
+    const deleteShiftBtn = document.getElementById('delete-shift');
+    if (deleteShiftBtn) {
+        deleteShiftBtn.addEventListener('click', deleteShiftHandler);
+    }
 
     // Переключение между режимами
-    document.getElementById('personal-view')?.addEventListener('click', () => {
-        document.getElementById('personal-view')?.classList.add('active');
-        document.getElementById('general-view')?.classList.remove('active');
-        document.getElementById('general-schedule')?.classList.add('hidden');
-        document.querySelector('.calendar-container')?.classList.remove('hidden');
-        document.querySelector('.header h1').textContent = '📅 Мой график работы';
-        loadShifts();
-    });
+    const personalViewBtn = document.getElementById('personal-view');
+    if (personalViewBtn) {
+        personalViewBtn.addEventListener('click', () => {
+            document.getElementById('personal-view')?.classList.add('active');
+            document.getElementById('general-view')?.classList.remove('active');
+            document.getElementById('general-schedule')?.classList.add('hidden');
+            document.querySelector('.calendar-container')?.classList.remove('hidden');
+            document.querySelector('.header h1').textContent = '📅 Мой график работы';
+            loadShifts();
+        });
+    }
 
-    document.getElementById('general-view')?.addEventListener('click', () => {
-        document.getElementById('general-view')?.classList.add('active');
-        document.getElementById('personal-view')?.classList.remove('active');
-        document.getElementById('general-schedule')?.classList.remove('hidden');
-        document.querySelector('.calendar-container')?.classList.add('hidden');
-        document.querySelector('.header h1').textContent = '👥 Общий график сотрудников';
-        loadAllShifts();
-    });
-
-    // Авторизация - ПРАВИЛЬНЫЕ ID (согласно вашему HTML)
-    document.getElementById('login-btn')?.addEventListener('click', login);
-    document.getElementById('register-btn')?.addEventListener('click', register);
-    document.getElementById('show-register-link')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        showRegister();
-    });
-    document.getElementById('show-login-link')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        showLogin();
-    });
-    document.getElementById('logout-btn')?.addEventListener('click', logout);
+    const generalViewBtn = document.getElementById('general-view');
+    if (generalViewBtn) {
+        generalViewBtn.addEventListener('click', () => {
+            document.getElementById('general-view')?.classList.add('active');
+            document.getElementById('personal-view')?.classList.remove('active');
+            document.getElementById('general-schedule')?.classList.remove('hidden');
+            document.querySelector('.calendar-container')?.classList.add('hidden');
+            document.querySelector('.header h1').textContent = '👥 Общий график сотрудников';
+            loadAllShifts();
+        });
+    }
 }
 
 // --- Запуск приложения ---
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('DOM загружен, инициализация...');
-
-    // Проверка Supabase
-    if (!supabase) {
-        console.error('Supabase не инициализирован!');
-        return;
-    }
-
+    console.log('DOM полностью загружен');
+    
+    // Проверяем, что все основные элементы существуют
+    console.log('Проверка элементов DOM:');
+    console.log('show-register-link:', document.getElementById('show-register-link'));
+    console.log('show-login-link:', document.getElementById('show-login-link'));
+    console.log('login-btn:', document.getElementById('login-btn'));
+    console.log('register-btn:', document.getElementById('register-btn'));
+    console.log('login-form:', document.getElementById('login-form'));
+    console.log('register-form:', document.getElementById('register-form'));
+    
+    // Инициализация обработчиков
     initEventListeners();
-
+    
+    // Создаем глобальные функции для совместимости
+    window.showRegister = showRegister;
+    window.showLogin = showLogin;
+    window.login = login;
+    window.register = register;
+    window.logout = logout;
+    
     // Очистка полей формы
     ['login-username', 'login-password', 'register-username', 
      'register-fullname', 'register-password', 'register-confirm'].forEach(id => {
         const element = document.getElementById(id);
         if (element) element.value = '';
     });
-
-    // Проверка авторизации
-    await checkAuth();
     
-    // Делаем функции глобальными для обработки onclick из HTML
-    window.showRegister = showRegister;
-    window.showLogin = showLogin;
-    window.login = login;
-    window.register = register;
-    window.logout = logout;
+    // Проверка авторизации
+    if (supabase) {
+        await checkAuth();
+    } else {
+        console.error('Supabase не инициализирован, показываем экран авторизации');
+        showAuth();
+    }
+    
+    console.log('Инициализация завершена');
+});
+
+// Обработчик клика вне модального окна
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('shift-modal');
+    if (event.target === modal) {
+        hideModal();
+    }
 });
